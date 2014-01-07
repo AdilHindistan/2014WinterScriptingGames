@@ -7,17 +7,22 @@ Function Export-LiveIP {
     )
 
 foreach ($ip in $ipaddress) {
-    $obj = "" | Select IP, Live
+    $obj = "" | Select IP, Live, Hostname
     if (Test-Connection $ip -Count 1) {
         $obj.ip = $ip
         $obj.Live = $true
+        $obj.Hostname = [System.Net.Dns]::gethostentry($ip).HostName
         }
     else {
         $obj.ip = $ip
         $obj.Live = $false
+        $obj.Hostname = ""
         }
 Write-Output $obj
 } #End of Foreach
 }
 
+#TEST
 Export-LiveIP -ipaddress $ipaddress
+
+
