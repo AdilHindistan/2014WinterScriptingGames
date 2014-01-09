@@ -1,0 +1,18 @@
+To do:
+1) needs to know if there is a machine associated with the IP address and its operating system, and service pack. 
+2) The results – positive and negative – need to be recorded for future use – preferably in a CSV file or other readable format. 
+3) It is important that unused IP addresses are recorded
+
+Once the initial scan is produced Dr Scripto want to be able to investigate specific machines or groups of machines. Those investigations should return, one or more, the following sets of data: 
+•	Hardware information including manufacturer, model, CPU, RAM and disk sizes (only local disks are required). 
+•	The date of the last hotfix applied to the machine and last reboot time.
+•	 If any of the following are installed:
+o	IIS
+o	SQL Server 
+o	Exchange
+o	SharePoint
+•	Installed Windows components
+
+
+Comments:
+a) Output 

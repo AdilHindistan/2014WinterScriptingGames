@@ -1,4 +1,5 @@
 ﻿#Bartek. http://becomelotr.wordpress.com/2013/05/07/event-2-my-way/
+#including manufacturer, model, CPU, RAM and disk sizes 
 Function Get-ComputerInventory {
 
 [OutputType('WMI.Inventory')]            
@@ -31,6 +32,9 @@ filter ConvertTo-WmiInventory {
             
         $Out = New-Object PSObject -Property @{            
             Name = $_.Name            
+            Manufacturer= $_.Manufacturer
+            Model = $_.Model
+            RAM = $_.TotalPhysicalMemory
             Processors = $Processors            
             LogicalProcessors = $LogicalProcessors            
             OSVersion = $OS            

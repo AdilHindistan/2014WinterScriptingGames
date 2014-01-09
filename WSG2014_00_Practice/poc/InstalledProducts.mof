@@ -1,0 +1,46 @@
+// Installed Products MOF File
+// MOF file will be deployed remotely on Target Servers.
+// 
+// PURPOSE: Provide a faster inventory of Installed Software remotely.
+// 
+// COMPILATION: mofcomp.exe InstalledProducts.mof
+// 
+// CLASSES:
+// -- InstalledProducts
+// -- InstalledProducts32
+// 
+// AUTHOR: Sunny Chakraborty
+// EMAIL: sunnyc7@gmail.com
+// 
+// COMPILATION: mofcomp.exe InstalledProducts.mof
+// 
+// POWERSHELL: gwmi -ComputerName $server -Namespace root\default -class InstalledProducts | Select PsComputerName,DisplayName,InstallDate,Publisher,EstimatedSize,UninstallString,WindowsInstaller
+
+#PRAGMA AUTORECOVER
+ 
+[dynamic, provider("RegProv"),
+ProviderClsid("{fe9af5c0-d3b6-11ce-a5b6-00aa00680c3f}"),ClassContext("local|HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall")]
+class InstalledProducts {
+[key] string KeyName;
+[read, propertycontext("DisplayName")] string DisplayName;
+[read, propertycontext("DisplayVersion")] string DisplayVersion;
+[read, propertycontext("InstallDate")] string InstallDate;
+[read, propertycontext("Publisher")] string Publisher;
+[read, propertycontext("EstimatedSize")] string EstimatedSize;
+[read, propertycontext("UninstallString")] string UninstallString;
+[read, propertycontext("WindowsInstaller")] string WindowsInstaller;
+};
+ 
+[dynamic, provider("RegProv"),
+ProviderClsid("{fe9af5c0-d3b6-11ce-a5b6-00aa00680c3f}"),ClassContext("local|HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432node\\Microsoft\\Windows\\CurrentVersion\\Uninstall")]
+class InstalledProducts32 {
+[key] string KeyName;
+[read, propertycontext("DisplayName")] string DisplayName;
+[read, propertycontext("DisplayVersion")] string DisplayVersion;
+[read, propertycontext("InstallDate")] string InstallDate;
+[read, propertycontext("Publisher")] string Publisher;
+[read, propertycontext("EstimatedSize")] string EstimatedSize;
+[read, propertycontext("UninstallString")] string UninstallString;
+[read, propertycontext("WindowsInstaller")] string WindowsInstaller;
+};
+
