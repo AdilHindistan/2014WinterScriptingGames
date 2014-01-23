@@ -1,6 +1,8 @@
-﻿#[string[]]$output = @()
-#Pull and randomize names
-[string[]]$names = get-content "D:\Users\John\Desktop\Winter Scripting games\Event1\Names.txt"
+﻿<#Pull and randomize names
+This is a csv with a name, email, and Primary colomun which is left blank if they are not a primary and filled in 
+with anything if they are 
+#>
+$Names = Import-Csv -Path "D:\Users\John\Desktop\Winter Scripting games\Event1\Names.csv" -Header Name,Email,Primary
 $names = $names | 
 			Get-Random -count $names.Count
 
@@ -27,8 +29,8 @@ if ($names.Count % 2) {
 									Get-Random -count 1
 		}
 		Else {
-			$DoubleTeamLeader = "Enter in team member : "
-			While (-not ($names -contains $DoubleTeamLeader)) {
+			$DoubleTeamLeader = Read-Host "Enter in team member : "
+			While (-not ($Names.Name -contains $DoubleTeamLeader)) {
 				Write-Warning "User $DoubleTeamLeader not found in list, please try again"
 				$DoubleTeamLeader = Read-Host "Enter in team member : "
 			}
@@ -42,25 +44,42 @@ if ($names.Count % 2) {
 Else {
 	$DoubleTeamLeader = ""
 }
-	
-for ($i=0; $i -lt $names.length; $i+=2) {
+
+#Because I'm worried about ending up in a situation where I matched everyone and only have primaries left
+#I'm taking care of them first
+$Primaries = ($names | Where-object Primary).Name
+[System.Collections.ArrayList]$NonPrimaries = ($names | Where-object {-not $_.Primary}).Name
+If ($Primaries.Count -gt $NonPrimaries.Count) {
+	Write-Warning "too many primaries, please re-run with less primaries or more non primaries"
+	exit 1
+}
+								
+Foreach ($Primary in $Primaries) {
 	$TeamEntry = [pscustomobject]$TeamEntryProperties
-	$TeamEntry.leader = $names[$i]
-	$TeamEntry.Subordinate = $names[$i+1]
-	#"$($names[$i]),$($names[$i+1])"
+	$TeamEntry.leader = $Primary
+	$TeamEntry.Subordinate = $NonPrimaries[0]
+	$TeamList += $TeamEntry
+	$NonPrimaries.RemoveAt(0)
+}
+
+for ($i=0; $i -lt $NonPrimaries.count; $i+=2) {
+	$TeamEntry = [pscustomobject]$TeamEntryProperties
+	$TeamEntry.leader = $NonPrimaries[$i]
+	$TeamEntry.Subordinate = $NonPrimaries[$i+1]
 	$TeamList += $TeamEntry
 }
 
 If ($DoubleTeamLeader) {
 	#Since we populate the Leader first in the pevious loop, we need to swap those since we specify the Double Team leader
 	$TeamList[-1].Subordinate = $TeamList[-1].Leader
+	#Look for the Double team leaders current sub
 	$CurrentSub = ($TeamList | Where-Object {$_.Leader -eq $DoubleTeamLeader}).Subordinate   
-	$OddGroup = $names | 
+	#Pull a random user who isn't the double team lead and their current subordinate
+	$OddSub = ($names | 
 					Get-Random -count $names.Count |
 					Where-Object {($_ -ne $DoubleTeamLeader) -and ($_ -ne $CurrentSub)} |
-					Select-Object -First 1
-	$TeamList[-1].Subordinate = $OddGroup
-	#"$OddGroup"
+					Select-Object -First 1).Name
+	$TeamList[-1].Subordinate = $OddSub
 }
 
 
