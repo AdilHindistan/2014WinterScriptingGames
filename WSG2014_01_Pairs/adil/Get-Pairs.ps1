@@ -16,30 +16,34 @@ Function Get-Pair {
         [hashtable]$previousMatches
     )
 
+    
+    
     ## This part of code handles odd case, where one person is matched to two pals
     if ($pickTwo) {  
-      
+    
+        ## we will always remove the users we are pairing or paired from the pool of $users 
+        ## so that they do not come up as a result of get-random    
         $users.Remove($pickTwo)
-
-            for ($i=0; $i -lt 2 ; $i++ ) {
-                
-                 if ($pickTwo -in $prime) {       
-                      
-                    Do {
-                        $right = Get-Random -InputObject $users
-                    } while ($right -in $prime)
-
-                } else {
-
+        
+        ## PickTwo will have 2 pairs, so we will get two random people within the set constraints   
+        for ($i=0; $i -lt 2 ; $i++ ) {
+            
+            ## To satisfy Primary constraint, we need to check both person (left and right of pair)
+            ## to make sure not both are primary
+            if ($pickTwo -in $prime) {                             
+                Do {
                     $right = Get-Random -InputObject $users
-                
-                }
-                Write-Verbose "Match result: $pickTwo v $right"        
-                [PSCustomObject]@{ "LeftPair"=$pickTwo ; "RightPair" = $right }                
+                } while ($right -in $prime)
+            } else {                                     
+                $right = Get-Random -InputObject $users                
+            }
 
-                Write-Verbose "Removing $right from the pool of people"
-                $users.Remove($right)
-            }        
+            Write-Verbose "Match result: $pickTwo v $right"        
+            [PSCustomObject]@{ "LeftPair"=$pickTwo ; "RightPair" = $right }                
+
+            Write-Verbose "Removing $right from the pool of people"
+            $users.Remove($right)
+        }        
 
     }
 
