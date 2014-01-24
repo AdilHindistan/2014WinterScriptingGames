@@ -3,20 +3,16 @@
 [CMDLETBINDING()]
 Param(
     $path = "${pwd}\names3.txt",
-
-    [string[]]$primary
+    [string[]]$primary#=@("Sunny","David","John","Adil")
 )
 
-#region Pair
+#region Helper Functions
 Function Get-Pair {
     param(
         [Parameter(Mandatory)]
         [System.Collections.ArrayList]$users,
-
         [string]$pickTwo,
-
-        [string[]]$prime=@('Adil','Pamela','Andy','Matt'),
-
+        [string[]]$prime=@('AndY','haZEM','BeZEN','JULIE'),
         [hashtable]$previousMatches
     )
 
@@ -31,7 +27,7 @@ Function Get-Pair {
                       
                     Do {
                         $right = Get-Random -InputObject $users
-                    } while ($ight -in $prime)
+                    } while ($right -in $prime)
 
                 } else {
 
@@ -124,7 +120,7 @@ Function Get-PreviousPair {
 
 
 ############  main script ########################
-
+#Change this to CSV
 [array]$names = ((Get-Content $path) -split ',').Trim()
 
 ## If we have run before, import those results
@@ -141,7 +137,7 @@ if (test-path "$pwd\pairs_output_*.csv") {
 ## No need to randomize at this stage, as we will do that in the function
 ## Write-Verbose "Randomizing members"
 ## $names = Get-Random -InputObject $names -Count $names.Count
-$names+='Adil'   ## use to test odd number
+#$names+='Adil'   ## use to test odd number
 
 
 
@@ -173,6 +169,6 @@ if ($names.Count % 2 -eq 0) {
 }
 
 ## save to file
-$paired |export-csv "${pwd}\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
+$paired |export-csv -notypeinformation "${pwd}\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
 $paired |ft -AutoSize
 
