@@ -11,6 +11,7 @@ Param(
         [String]$PreviousPairDirectory = "$pwd",
     
         [Parameter(Mandatory=$False,Position=3)] 
+        [ValidateCount(0,5)]
         [string[]]$primary#=@("Sunny","David","John","Adil")
 )
 
@@ -138,8 +139,9 @@ Function Get-Pair {
 
                 ## Prevent endless loop as the remaining person is not allowed to be paired as per constraints
                 if (($pool.Count -eq 1) -and $Rematch) {
+
                     Write-Warning "$left and $right are the only two left but constraints do not allow them to be paired"
-                    $Rematch = $false
+                    $Rematch = $false   ## We might consider throwing away current pairs, and starting from scratch instead of leaving the last two unpaired
                 }
             } while ( $Rematch )
 
@@ -241,4 +243,3 @@ if ($names.Count % 2 -eq 0) {
 ## save to file
 $paired |export-csv -NoTypeInformation "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
 $paired |ft -AutoSize
-
