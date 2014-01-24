@@ -2,34 +2,42 @@
 
 [CMDLETBINDING()]
 Param(
-    $path = "${pwd}\names.txt",
-    [string[]]$primary#=@("Sunny","David","John","Adil")
+        [Parameter(Mandatory=$false,Position=1)] 
+        [ValidateScript({Test-Path $_ -PathType 'Leaf'})] 
+        [String]$UserList = "$pwd\names3.txt",
+        
+        [Parameter(Mandatory=$False,Position=2)]
+        [ValidateScript({Test-Path "$_\pairs_output_*.csv"})]
+        [String]$PreviousPairDirectory = "$pwd",
+    
+        [Parameter(Mandatory=$False,Position=3)] 
+        [string[]]$primary#=@("Sunny","David","John","Adil")
 )
 
 
-Function Check-PreviousMatch {
+Function Check-PreviousPair {
 <#
     .SYNOPSIS
-    Check if pair satisfy constraints for previous matches
+    Check if pair satisfy constraints for previous pairs
 #>
     param (
             [string]$left,
             [string]$right,
-            [hashtable]$previousMatches
+            [hashtable]$previousPairs
     )
 
-     ## Check against previous matches contstraint
-    $previouslyMatched = $previousMatches[$left]                
-    if ($right -in $previouslyMatched) {
+     ## Check against previous pair  constraint
+    $previouslyPaired = $previousPairs[$left]                
+    if ($right -in $previouslyPaired) {
                 
-        Write-Verbose "Check-IsPreviousMatch: $left matched $right before! Additional checks needed."
+        Write-Verbose "Check-PreviousPair: $left paired with $right before! Additional checks needed."
 
-        if ($previouslyMatched.Count -gt 4) {
-            write-verbose "Check-IsPreviousMatch: $left matched at least 4 other people before, OK to match them again"                    
+        if ($previouslyPaired.Count -gt 4) {
+            write-verbose "Check-PreviousPair: $left has paired with at least 4 other people before, OK to pair them again"                    
             $false
 
         } else {
-            Write-Verbose "Check-IsPreviousMatch: $left has not yet match 4 other people, we will pair with someone else"
+            Write-Verbose "Check-PreviousPair: $left has not yet been paired with 4 other people, so needs to be paired with someone else"
             $true
             ## todo : edge case, what if there is a prime vs prime left?
         }            
@@ -46,12 +54,12 @@ Function Get-Pair {
         [System.Collections.ArrayList]$pool,
         [string]$pickTwo,
         [string[]]$prime=@('AndY','haZEM','BeZEN','JULIE'),
-        [hashtable]$previousMatches
+        [hashtable]$previousPairs
     )
 
     Write-Verbose "Get-Pair: pool size: $($pool.count)"        
     #region handle_odd
-    ## This part of code handles odd case, where one person is matched to two pals
+    ## This part of code handles odd case, where one person is paired to two pals
     ## Todo: I think this part can be collapsed into the handle_even, as the same set of checks needs to be done here too
     if ($pickTwo) {  
     
@@ -77,11 +85,11 @@ Function Get-Pair {
                 }
 
                 Write-Verbose "Get-Pair: Checking if $left can be paired with $right"
-                $Rematch = Check-PreviousMatch -left $left -right $right -previousMatches $previousMatches
+                $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs
 
             } while ($Rematch)
 
-            Write-Verbose "Get-Pair: Match result: $left | $right"        
+            Write-Verbose "Get-Pair: Pairing result: $left | $right"        
             [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }                
 
             Write-Verbose "Get-Pair: Removing $right from the pool of people"
@@ -124,16 +132,21 @@ Function Get-Pair {
                         Write-Verbose "Get-Pair: Right : $right"
                 }
 
-                ## Check against previous match constaints 
+                ## Check against previous pair constraints 
                 Write-Verbose "Get-Pair: Checking if $left can be paired with $right"
-                $Rematch = Check-PreviousMatch -left $left -right $right -previousMatches $previousMatches
+                $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs
 
+                ## Prevent endless loop as the remaining person is not allowed to be paired as per constraints
+                if (($pool.Count -eq 1) -and $Rematch) {
+                    Write-Warning "$left and $right are the only two left but constraints do not allow them to be paired"
+                    $Rematch = $false
+                }
             } while ( $Rematch )
 
             Write-Verbose "Get-Pair: Removing $right from the pool of people"
             $pool.Remove($right)
 
-            Write-Verbose "Get-Pair: Match result: $left | $right"
+            Write-Verbose "Get-Pair: Pairing result: $left | $right"
             [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }   
         
     }
@@ -142,11 +155,29 @@ Function Get-Pair {
 
 
 Function Get-PreviousPair {
+<#
+    .SYNOPSIS
+    Create a hash table where each person is a key, for which value is an array of previously paired people
     
+    .EXAMPLE
+     PS> $hash
+        Name                           Value                                                                            
+        ----                           -----                                                                            
+        Bezen                          {Robert}                                                                         
+        Tom                            {David}                                                                          
+        Greg                           {Hazem, Mason} 
+    
+    .OUTPUT
+    [Hashtable]
+
+#>
+    param([string]$PreviousPairDirectory)
+
     $hash=@{}
-    Foreach ($file in (Get-ChildItem "$pwd\pairs_output_*.csv")){
+    Foreach ($file in (Get-ChildItem "$PreviousPairDirectory\pairs_output_*.csv")){
         Write-Verbose "Processing $($file.name)"
         import-csv $file  | foreach {
+         # Creating a hashtable of users with the value containing all the previous pairs for that user
             $Hash[$_.LeftPair] +=,$_.RightPair       
             $Hash[$_.RightPair] +=,$_.LeftPair 
         }
@@ -156,16 +187,18 @@ Function Get-PreviousPair {
 
 
 ############  main script ########################
-#Change this to CSV
-[array]$names = ((Get-Content $path) -split ',').Trim()
+# Change this to CSV
+## [array]$names = ((Get-Content $path) -split ',').Trim()
+[array]$names = Get-Content $UserList
+
 
 ## If we have run before, import those results
-if (test-path "$pwd\pairs_output_*.csv") {
+if ($PreviousPairDirectory) {
 
     ## assuming we are saving results to script dir
-    $PreviousPair = Get-PreviousPair -verbose
+    $PreviousPair = Get-PreviousPair -PreviousPairDirectory $PreviousPairDirectory -verbose
     Write-Verbose "Previous Pairs"
-    $PreviousPair
+    If ($VerbosePreference -eq "Continue") {$PreviousPair}
 }
 
 
@@ -173,7 +206,7 @@ if (test-path "$pwd\pairs_output_*.csv") {
 ## No need to randomize at this stage, as we will do that in the function
 ## Write-Verbose "Randomizing members"
 ## $names = Get-Random -InputObject $names -Count $names.Count
-# $names+='Adil'   ## use to test odd number
+$names+='Adil'   ## use to test odd number
 
 
 
@@ -181,7 +214,7 @@ if ($names.Count % 2 -eq 0) {
     ## even number
     
     if ($PreviousPair) {
-        $paired = Get-Pair -pool $names -previousMatches $PreviousPair  -Verbose
+        $paired = Get-Pair -pool $names -previousPairs $PreviousPair  -Verbose
     } else {
         $paired = Get-Pair -pool $names -Verbose
     }
@@ -199,13 +232,13 @@ if ($names.Count % 2 -eq 0) {
 
         
     if ($PreviousPair) { 
-        $paired = Get-Pair -pool $names -pickTwo $doubleChooser -previousMatches $PreviousPair -Verbose
+        $paired = Get-Pair -pool $names -pickTwo $doubleChooser -previousPairs $PreviousPair -Verbose
     } else {
         $paired = Get-Pair -pool $names -pickTwo $doubleChooser -Verbose
     }
 }
 
 ## save to file
-$paired |export-csv -notypeinformation "${pwd}\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
+$paired |export-csv -NoTypeInformation "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
 $paired |ft -AutoSize
 
