@@ -31,7 +31,7 @@ Function Get-Pair {
                       
                     Do {
                         $right = Get-Random -InputObject $users
-                    } while ($ight -in $prime)
+                    } while ($right -in $prime)
 
                 } else {
 
