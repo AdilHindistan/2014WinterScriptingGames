@@ -283,9 +283,10 @@ if ($names.Count % 2 -ne 0) {
     Write-Verbose "Removing $doubleChooser from available name pool"
     $AvailablePool.Remove($doubleChooser)
 
-    if ($doubleChooser -in $primary) {
+
+    if (($doubleChooser -in $primary) -or ($doubleChooser -in $PrimePair.RightPair)) {
     
-        ## We already paired primaries but this person has to be paired with an additional person
+        ## This person was already paired during Primary Pairing before but this person has to be paired with an additional person
         ## We still need to make sure the new pair satisfy pairing constraints
 
         $OddPair = Get-PairForOdd -pool $AvailablePool -doubleChooser $doubleChooser -previousPairs $PreviousPair -pick 1 -verbose
