@@ -2,8 +2,16 @@
 
 [CMDLETBINDING()]
 Param(
-    $path = "${pwd}\names3.txt",
-    [string[]]$primary#=@("Sunny","David","John","Adil")
+    [Parameter(Mandatory=$false,Position=1)] 
+	[ValidateScript({Test-Path $_ -PathType 'Leaf'})] 
+	[String]$UserList = "D:\Users\John\Documents\GitHub\PhillyPosh\WSG2014_01_Pairs\adil\names3.txt",
+	
+	[Parameter(Mandatory=$False,Position=2)]
+	[ValidateScript({Test-Path "$_\pairs_output_*.csv"})]
+	[String]$PreviousPairDirectory = "D:\Users\John\Documents\GitHub\PhillyPosh\WSG2014_01_Pairs\adil",
+    
+	[Parameter(Mandatory=$False,Position=3)] 
+	[string[]]$primary#=@("Sunny","David","John","Adil")
 )
 
 #region Helper Functions
@@ -112,10 +120,11 @@ Function Get-Pair {
 Function Get-PreviousPair {
     
     $hash=@{}
-    Foreach ($file in (Get-ChildItem "$pwd\pairs_output_*.csv")){
+    Foreach ($file in (Get-ChildItem "$PreviousPairDirectory\pairs_output_*.csv")){
         Write-Verbose "Processing $($file.name)"
         import-csv $file  | foreach {
-            $Hash[$_.LeftPair] +=,$_.RightPair       
+            #Creating a hashtable of users with the vaulue containing all the previous matchs for that user
+			$Hash[$_.LeftPair] +=,$_.RightPair       
             $Hash[$_.RightPair] +=,$_.LeftPair 
         }
     }
@@ -125,15 +134,15 @@ Function Get-PreviousPair {
 
 ############  main script ########################
 #Change this to CSV
-[array]$names = ((Get-Content $path) -split ',').Trim()
+[array]$names = Get-Content $UserList
 
 ## If we have run before, import those results
-if (test-path "$pwd\pairs_output_*.csv") {
-
+#if (test-path "$PreviousPairDirectory\pairs_output_*.csv") {
+if ($PreviousPairDirectory) {
     ## assuming we are saving results to script dir
     $PreviousPair = Get-PreviousPair -verbose
     Write-Verbose "Previous Pairs"
-    $PreviousPair
+    If ($VerbosePreference -eq "Continue") {$PreviousPair}
 }
 
 
@@ -173,6 +182,6 @@ if ($names.Count % 2 -eq 0) {
 }
 
 ## save to file
-$paired |export-csv -notypeinformation "${pwd}\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
+#$paired |export-csv -notypeinformation "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
 $paired |ft -AutoSize
 
