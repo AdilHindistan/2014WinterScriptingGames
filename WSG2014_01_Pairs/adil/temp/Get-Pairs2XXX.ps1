@@ -5,11 +5,19 @@
        Creates pairs of names from a supplied list
 
     .DESCRIPTION
+<<<<<<< HEAD
+       The Get-Pairs.ps1 script when run without any parameters will search the current directory for a list of names and pair them.
+       The script assumes that the initial series of names will be provided as names.txt file in the current working directory.
+       If the list of names are odd, it prompts the user to select the name that will be paired more than once.
+       When executed with the -primary switch, the script will first match the primary names.
+       It also checks that people are not repeatedly matched during subsequent runs of the script 
+=======
        The Get-Pairs.ps1 script when run when run without any parameters will search the current directory for a list of names and pair thems. 
        If the list contains an odd number it prompts the user to select the name to form a 3 member team.
 
        When run with the -primary parameter, the argument passed is considered a primary (or primaries) and the script will first math these with the rest of the names before pairing any remaining people. 
        It also checks to to ensure that people are not repeatedly matched during subsequent runs of the script 
+>>>>>>> a39b097fcf58314645b96eb7f20ed8b9f5ff873e
 
 
     .PARAMETER UserList
@@ -36,7 +44,7 @@
 Param(
         [Parameter(Position=1)] 
         [ValidateScript({Test-Path $_ -PathType 'Leaf'})] 
-        [String]$UserList = "$pwd\names3.txt",
+        [String]$UserList = "$pwd\names.csv",
         
         [Parameter(Position=2)]
         [ValidateScript({Test-Path "$_\pairs_output_*.csv"})]
@@ -47,6 +55,7 @@ Param(
         [string[]]$primary #=@('Josh','David','Julie') ## Need to validate these names are in $UserList
 )
 
+#region Helper-Functions
 Function Import-PreviousPair {
 <#
     .SYNOPSIS
@@ -285,22 +294,41 @@ Function Get-PairForEven {
 
 }
 
-############  Main Script ########################
+Function Send-PairEmail {
+[CmdletBinding()]
+Param 
+   ([String[]]$To, 
+    [String[]]$From,
+    [String[]]$CC = "sunny_c7@yahoo.com",
+    [String[]]$Subject,    
+    [String[]]$Body,
+    [String]$SmtpServer = "usmail"
+    )
+
+$Splat = @{
+To = $To 
+From = $From 
+CC = $CC
+Subject = $Subject    
+SmtpServer = $SmtpServer
+Body ="$($Body | ConvertTo-Html -Title $Subject)"
+}
+
+    Send-MailMessage @Splat
+    
+}
+
+#endregion
 
 ## To do: Handle import from csv (name,email)
 ## [array]$names = ((Get-Content $path) -split ',').Trim()
 ## [String[]]$emails = Get-Content $UserList 
 
-## assuming name_email.txt kind of input
-Get-Content $UserList | % { $Email=@{}}{ $Email[($_ -split ',')[0]]=($_ -split ',')[1]}
-$Names=@($Email.Keys)
-## <<<<<<< HEAD
-## $gamesName = "WSG2014_Event1_Pairs"
-
-## $transcriptPath = "$pwd\$gamesName.txt"
-## Start-Transcript -Path $transcriptPath
-## =======
-## >>>>>>> 272ec6082f0b3bbd86a8a24d3158b0408aed3131
+# MAIN
+#
+$names = @()
+$inputData = import-csv $UserList 
+$inputData | foreach {$names += $_.Names}
 
 [System.Collections.ArrayList]$AvailablePool=$Names
 $AllPairs=@()
@@ -423,9 +451,15 @@ if ($AvailablePool.count -ge 2) {
 #region output
 $Outputfile = "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
 
-$AllPairs |export-csv -NoTypeInformation -Path $Outputfile
-$AllPairs |Format-Table -AutoSize
-
 "Results are written to $Outputfile"
-## Stop-Transcript 
+$AllPairs |export-csv -NoTypeInformation -Path $Outputfile
+#Send Email to Pairs
+
+$AllPairs 
+$pairedResult = Import-csv "pairs_output_20140125_131932.csv"
+
+foreach ($member in $pairedResult) {
+    Send-PairEmail -To
+    }
+
 #endregion output

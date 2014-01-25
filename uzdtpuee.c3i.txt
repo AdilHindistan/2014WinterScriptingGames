@@ -1,0 +1,40 @@
+﻿Merge branch 'master' of https://github.com/sunnyc7/PhillyPosh
+
+Conflicts:
+	WSG2014_01_Pairs/adil/Get-Pairs2.ps1
+#
+# It looks like you may be committing a merge.
+# If this is not correct, please remove the file
+#	.git/MERGE_HEAD
+# and try again.
+
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Your branch and 'origin/master' have diverged,
+# and have 1 and 3 different commits each, respectively.
+#   (use "git pull" to merge the remote branch into yours)
+#
+# All conflicts fixed but you are still merging.
+#   (use "git commit" to conclude merge)
+#
+# Changes to be committed:
+#
+#	deleted:    WSG2014_01_Pairs/adil/Get-Pairs.ps1
+#	deleted:    WSG2014_01_Pairs/adil/Get-Pairs2.ps1
+#	deleted:    WSG2014_01_Pairs/adil/Get-Pairs3.ps1
+#	deleted:    WSG2014_01_Pairs/adil/Get-Pairs7.ps1
+#	deleted:    WSG2014_01_Pairs/adil/namesFinal.csv
+#	new file:   WSG2014_01_Pairs/adil/pairs_output_20140125_160257.csv
+#	new file:   WSG2014_01_Pairs/adil/pairs_output_20140125_160322.csv
+#	new file:   WSG2014_01_Pairs/adil/pairs_output_20140125_161256.csv
+#
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	WSG2014_01_Pairs/adil/temp/Get-Pairs.ps1
+#	WSG2014_01_Pairs/adil/temp/Get-Pairs2XXX.ps1
+#	WSG2014_01_Pairs/adil/temp/Get-Pairs3.ps1
+#	WSG2014_01_Pairs/adil/temp/Get-Pairs7.ps1
+
