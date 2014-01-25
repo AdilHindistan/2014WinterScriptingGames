@@ -1,16 +1,48 @@
 ﻿#requires -version 3.0
 
+<#
+    .Synopsis
+       Creates pairs of names from a supplied list
+
+    .DESCRIPTION
+       The Get-Pairs.ps1 script when run when run without aany parameters will search the current directory for a list of names and pair them to form secret pals. 
+       If the list contains an odd number it prompts the user to select the name that will have more than one secret pal.
+
+       When run with the -primary parameter, the names in an alternate list are considered primary and the script will first math these with the rest of the names before pairing any remaining people. 
+       It also checks to to ensure that people are not repeatedly matched during subsequent runs of the script 
+
+
+    .PARAMETER UserList
+        specifies the path to the text file that contains the list of names
+
+    .PARAMETER Primary
+        specifies the names of primary members of the team    
+
+    .PARAMETER PreviousPairDirectory
+        specifies the directory that previous pairings will be stored. These will be used match against subsequent pairings to avoid repeats
+
+    .EXAMPLE
+        Get-Pairs.ps1 -UserList C:\scratch\names.txt
+        This example will generate pairs from names in the list names.txt
+
+    .EXAMPLE
+   
+        .\Get-Pairs.ps1 -UserList C:\scratch\names.txt -primary Matt
+
+        This example will generate pairs from names in the list names.txt, while taking Matt as a primary.
+#>
+
 [CMDLETBINDING()]
 Param(
-        [Parameter(Mandatory=$false,Position=1)] 
+        [Parameter(Position=1)] 
         [ValidateScript({Test-Path $_ -PathType 'Leaf'})] 
         [String]$UserList = "$pwd\names3.txt",
         
-        [Parameter(Mandatory=$False,Position=2)]
+        [Parameter(Position=2)]
         [ValidateScript({Test-Path "$_\pairs_output_*.csv"})]
         [String]$PreviousPairDirectory = "$pwd",
     
-        [Parameter(Mandatory=$False,Position=3)] 
+        [Parameter(Position=3)] 
         [ValidateCount(0,5)]        
         [string[]]$primary #=@('Josh','David','Julie') ## Need to validate these names are in $UserList
 )
