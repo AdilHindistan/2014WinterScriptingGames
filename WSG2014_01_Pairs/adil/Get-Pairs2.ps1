@@ -54,6 +54,7 @@ Function Get-PairForPrime {
     param (
         [Parameter(Mandatory)]
         [System.Collections.ArrayList]$pool,
+        
         [string[]]$prime,
         [hashtable]$previousPairs
     )
@@ -70,12 +71,19 @@ Function Get-PairForPrime {
                 Write-Verbose "Get-PairForPrime: Checking if $left can be paired with $right"                
                 $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs -verbose
 
-                Write-Verbose "Get-PairForPrime: Removing $right from available name pool"
-                $pool.Remove($right)
+               ## Removing $right at this point would give some benefits:
+               ## Get-Random may just get a person again and again that does not satisfy previous-pair-constraints 
+               # Write-Verbose "Get-PairForPrime: Removing $right from available name pool"
+               # $pool.Remove($right)
+
                 Write-Verbose "Get-PairForPrime: pool count $($pool.Count)" 
             }
         
         } While ($Rematch)
+
+        ## Removing it at this point 
+        Write-Verbose "Get-PairForPrime: Removing $right from available name pool"
+        $pool.Remove($right)
         
         Write-Verbose "Get-PairForPrime: Pairing result: $left | $right"        
         
@@ -250,7 +258,7 @@ if ($primary) {
     If ($PreviousPairDirectory) {
         
         Write-Verbose "Pair output exists, need to check for previous pairs"
-        $PrimePair = Get-PairForPrime -pool $AvailablePool. -prime $primary -previousPairs $PreviousPair -verbose
+        $PrimePair = Get-PairForPrime -pool $AvailablePool -prime $primary -previousPairs $PreviousPair -verbose
     
     } else {
         
@@ -310,6 +318,7 @@ if ($names.Count % 2 -ne 0) {
             $AvailablePool.Remove($member)
         
     }
+
     $AllPairs += $oddpair | % {$_}
 }
 #endregion handle_odd_number
