@@ -12,7 +12,7 @@ Param(
     
         [Parameter(Mandatory=$False,Position=3)] 
         [ValidateCount(0,5)]        
-        [string[]]$primary =@('Sunny','David','Julie') ## Need to validate these names are in $UserList
+        [string[]]$primary #=@('Josh','David','Julie') ## Need to validate these names are in $UserList
 )
 
 Function Import-PreviousPair {
@@ -89,8 +89,7 @@ Function Check-PreviousPair {
 
         } else {
             Write-Verbose "Check-PreviousPair: $left has not yet been paired with 4 other people, so needs to be paired with someone else"
-            $true
-            ## todo : edge case, what if there is a prime vs prime left?
+            $true            
         }            
     }
 }
@@ -123,28 +122,21 @@ Function Get-PairForPrime {
             if ($previousPairs) {
 
                 Write-Verbose "Get-PairForPrime: Checking if $left can be paired with $right"                
-                $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs -verbose
-
-               ## Removing $right at this point would give some benefits:
-               ## Get-Random may just get a person again and again that does not satisfy previous-pair-constraints 
-               # Write-Verbose "Get-PairForPrime: Removing $right from available name pool"
-               # [void]$pool.Remove($right)
-
-                Write-Verbose "Get-PairForPrime: pool count $($pool.Count)" 
+                $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs -verbose                
             }
         
-        } While ($Rematch)
+        } While ($Rematch)        
 
-        ## Removing it at this point 
+        
+        Write-Verbose "Get-PairForPrime: Pairing result: $left | $right"                
+        [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }  
+        
         Write-Verbose "Get-PairForPrime: Removing $right from available name pool"
         [void]$pool.Remove($right)
         
-        Write-Verbose "Get-PairForPrime: Pairing result: $left | $right"        
-        
-        [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }  
+        Write-Verbose "Get-PairForPrime: pool count $($pool.Count)" 
 
-    }
-    Write-Verbose "Get-PairForPrime: pool count $($pool.Count)"                
+    }                   
 }
 
 Function Get-PairForOdd {
@@ -173,11 +165,7 @@ Function Get-PairForOdd {
 
         ## we will always remove the users we are pairing or paired from the pool of $pool 
         ## so that they do not come up as a result of get-random    
-        $left = $doubleChooser
-        
-        ## Not needed as [ArrayList] is shared with main script
-        ## Write-Verbose "Get-PairForOdd: Removing $left from the pool of available people"        
-        ## [void]$pool.Remove($left)
+        $left = $doubleChooser       
 
         Write-Verbose "Get-PairForOdd: $left will pick $pick from available people"                        
         for ($i=0; $i -lt $pick ; $i++ ) {
@@ -247,8 +235,9 @@ Function Get-PairForEven {
                 ## Prevent endless loop as the remaining person is not allowed to be paired as per constraints
                 if (($pool.Count -eq 1) -and $Rematch) {
 
-                    Write-Warning "$left and $right are the only two left but constraints do not allow them to be paired" 
-                    $Rematch = $false   ## We might consider throwing away current pairs, and starting from scratch instead of leaving the last two unpaired
+                    Write-Warning "$left and $right are the only two left but constraints do not allow them to be paired. Exiting" 
+                    Exit
+                    ##$Rematch = $false   ## We might consider throwing away current pairs, and starting from scratch instead of leaving the last two unpaired                    
                 }
 
             } while ( $Rematch )
@@ -268,8 +257,9 @@ Function Get-PairForEven {
 
 ## To do: Handle import from csv (name,email)
 ## [array]$names = ((Get-Content $path) -split ',').Trim()
-[String[]]$emails = Get-Content $UserList 
-## assuming
+## [String[]]$emails = Get-Content $UserList 
+
+## assuming name_email.txt kind of input
 Get-Content $UserList | % { $Email=@{}}{ $Email[($_ -split ',')[0]]=($_ -split ',')[1]}
 $Names=@($Email.Keys)
 ## <<<<<<< HEAD
@@ -281,6 +271,7 @@ $Names=@($Email.Keys)
 ## >>>>>>> 272ec6082f0b3bbd86a8a24d3158b0408aed3131
 
 [System.Collections.ArrayList]$AvailablePool=$Names
+$AllPairs=@()
 
 ## If we have run the script to pair people before, import those results
 if ($PreviousPairDirectory) {
@@ -301,24 +292,41 @@ Write-Verbose "Available pool: $($AvailablePool.count)"
 
 if ($primary) {
 
+    ##Handle the case where supplied primary is NOT in the supplied user list
     Foreach ($p in $primary) {
         if ($p -notin $Names) { 
-            Write-Warning "Primary $p is not in the provided name list. Exiting"
-            Exit
+            Write-Warning "Primary $p is not in the provided name list."            
+            $reselectPrimary = $true
+            break
         }
     }
 
+    if (([math]::Floor($($names.Count/2)) -lt $Primary.count)) { 
+        $reselectPrimary = $true
+    }
+    
+    if ($reselectPrimary) {
+        $PrimaryMax = 5
+        $title = "Select up to $PrimaryMax people"
+        do {
+             [String[]]$Primary = $Names |Out-GridView -OutputMode Multiple -Title $title
+            $title = "You cannot select more than half of the people as primary. Limit your selection to $PrimaryMax people or less than half"
+        } until (([math]::Floor($($names.Count/2)) -ge $Primary.count) -and ($Primary.count -le $PrimaryMax))
+    }
+    
+
     Write-Verbose "Removing primes from available name pool as they cannot pair with each other"    
+    
     Foreach ($member in $primary) {             
             Write-Verbose "Removing $member" 
             $AvailablePool.Remove($member) 
     }
     Write-Verbose "Available Pool: $($AvailablePool.Count)"
 
-    Write-Verbose "Get Pairs for Primes"
+    Write-Verbose "Get Pairs for Primaries"
     If ($PreviousPairDirectory) {
         
-        Write-Verbose "Pair output exists, need to check for previous pairs"
+        Write-Verbose "PreviousPairDirectory exists, need to check for previous pairs"
         $PrimePair = Get-PairForPrime -pool $AvailablePool -prime $primary -previousPairs $PreviousPair -verbose
     
     } else {
@@ -327,15 +335,8 @@ if ($primary) {
         $PrimePair = Get-PairForPrime -pool $AvailablePool -prime $primary -verbose
     }
     
-    Write-Verbose "Available Pool: $($AvailablePool.Count)"
-##  [arraylist] in the function seems to be passed by reference, so changes to it in the functions are reflected in the main script
-##    foreach ($member in $PrimePair.RightPair) {
-##        Write-Verbose "Removing $member from available name pool"
-##        $AvailablePool.Remove($member)
-##    }
-##    Write-Verbose "Available pool: $($AvailablePool.count)"
     
-    $AllPairs=$PrimePair
+    $AllPairs+=$PrimePair
 }
 #endregion handle_primes
 
@@ -370,27 +371,22 @@ if ($names.Count % 2 -ne 0) {
         ## This person is not a primary, which means it needs to be paired with two other people
         $OddPair = Get-PairForOdd -pool $AvailablePool -doubleChooser $doubleChooser -previousPairs $PreviousPair -pick 2 -verbose
                 
-    }
-    
-    ## We can now remove oddpair members from the available name pool
-    ## Foreach ($member in $OddPair.RightPair) {
-    ##        Write-Verbose "Removing $member from available name pool"
-    ##        $AvailablePool.Remove($member)        
-    ## }
+    }    
 
     $AllPairs += $oddpair | % {$_}
 }
 #endregion handle_odd_number
 
-
-## even number   
-if ($PreviousPairDirectory) {
-    $EvenPair = Get-PairForEven -pool $AvailablePool -previousPairs $PreviousPair  -Verbose
-} else {
-    $EvenPair = Get-PairforEven -pool $AvailablePool -Verbose
+#region hand_even_number if any people left
+if ($AvailablePool.count -ge 2) {
+    if ($PreviousPairDirectory) {
+        $EvenPair = Get-PairForEven -pool $AvailablePool -previousPairs $PreviousPair  -Verbose
+    } else {
+        $EvenPair = Get-PairforEven -pool $AvailablePool -Verbose
+    }
+    
+    $AllPairs +=$EvenPair | % {$_}
 }
-
-$AllPairs +=$EvenPair | % {$_}
 
 #region output
 $Outputfile = "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
