@@ -1,0 +1,9 @@
+Primaries are in the user list.
+Primary Validation.
+- Check if primary's are already in the list.
+- Write-Output, and ask them pick
+Email talking
+
+Sunny
+Mailing
+Transcript peice.
