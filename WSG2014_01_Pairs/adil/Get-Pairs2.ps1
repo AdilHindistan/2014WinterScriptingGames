@@ -13,20 +13,27 @@
 
 
 .PARAMETER UserList
+    specifies the path to the text file that contains the list of names
 
 .PARAMETER Primary
+    specifies the names of primary members of the team    
 
 .PARAMETER PreviousPairDirectory
+    specifies the directory that previous pairings will be stored. These will be used match against subsequent pairings to avoid repeats
 
 .OUTPUT
-    Hashtable containing pairs of names
+    Hashtable containing the pairings for secret pals, pairings with primaries and others.
+    
 
 .EXAMPLE
     Get-Pairs.ps1 -UserList C:\scratch\names.txt
+    This example will generate pairs from names in the list names.txt
 
 .EXAMPLE
    
-    .\Get-Pairs.ps1 -UserList C:\scratch\names.txt -primary c:\scratch\primarylist.txt
+    .\Get-Pairs.ps1 -UserList C:\scratch\names.txt -primary Matt
+
+    This example will generate pairs from names in the list names.txt, while taking Matt as a primary.
 #>
 
 [CMDLETBINDING()]
