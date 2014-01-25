@@ -313,7 +313,7 @@ if ($names.Count % 2 -ne 0) {
         ## to do: remove $names, might be too crowded          
         $doubleChooser=Read-Host "Please choose a person to have 2 pals`n $names"
         ## to do: have to do something about case-sensitivity
-    } while ($names -cnotcontains $doubleChooser)
+    } while ($names -notcontains $doubleChooser)
 
     
     Write-Verbose "Removing $doubleChooser from available name pool"

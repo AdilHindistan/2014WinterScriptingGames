@@ -20,6 +20,9 @@ Function Import-PreviousPair {
     .SYNOPSIS
     Imports the previous pairs to check against
 
+    .DESCRIPTION
+    Reads previous outputs of the script to import back previously paired people lists and store them to comply with pairing constraints.
+
     .NOTES
     Create a hash table where each person is a key, for which value is an array of previously paired people
     
@@ -30,6 +33,10 @@ Function Import-PreviousPair {
         Bezen                          {Robert}                                                                         
         Tom                            {David}                                                                          
         Greg                           {Hazem, Mason} 
+        ...                            {.....,...,...}
+
+        In the example above, first two person has paired with one other person, while Greg has paired with two, Hazem and Mason
+        According to rules Greg should not be able to pair with either until he has matched with at least 4 others
     
     .OUTPUT
     [Hashtable]
@@ -53,10 +60,20 @@ Function Check-PreviousPair {
 <#
     .SYNOPSIS
     Check if pair satisfy constraints for previous pairs
+
+    .DESCRIPTION
+    It checks whether the passed pair satisfy "no two people should pair unless paired with at least 4 other" constraint or not
+
+    
 #>
     param (
+            [Parameter(mandatory)]
             [string]$left,
+            
+            [Parameter(mandatory)]
             [string]$right,
+            
+            [Parameter(mandatory)]
             [hashtable]$previousPairs
     )
 
@@ -82,6 +99,10 @@ Function Get-PairForPrime {
     <#
         .SYNOPSIS
         Get a pair for each primary
+
+        .DESCRIPTION
+        Gets a random person as pair of a designated primaries satisfying the "no two primaries should pair" constraint.
+        
     #>
 
     param (
@@ -131,6 +152,13 @@ Function Get-PairForOdd {
         .SYNOPSIS
         Handles the case where one person will be paired to two others
 
+        .DESCRIPTION
+        
+        .NOTES
+        In the case of odd number of people, someone ($doubleChooser) needs to be paired with two others. However, there is a case where the selected person may also be a primary. 
+        Because script first gets a pair for each primary, this means the selected person ($doubleChooser) has already been paired once, and only needs to be paired one more person
+        This is the reason we have $pick parameter 
+
     #>
     param (
         [System.Collections.ArrayList]$pool,
@@ -178,6 +206,12 @@ Function Get-PairForEven {
 <#
     .SYNOPSIS
     Create Pairs within set constraints
+
+    .DESCRIPTION
+    Gets a pool of people to choose from and create pairs taking into account whether they were paired before and satisfy that criteria
+    
+    .NOTES
+    At this point, main script should have taken care of primaries, so no need to check if the paired people are primaries  
 #>
     param(
         [Parameter(Mandatory)]
@@ -235,14 +269,14 @@ Function Get-PairForEven {
 ## assuming
 Get-Content $UserList | % { $Email=@{}}{ $Email[($_ -split ',')[0]]=($_ -split ',')[1]}
 $Names=@($Email.Keys)
+<<<<<<< HEAD
 $gamesName = "WSG2014_Event1_Pairs"
 $transcriptPath = "$pwd\$gamesName.txt"
 Start-Transcript -Path $transcriptPath
+=======
+>>>>>>> 272ec6082f0b3bbd86a8a24d3158b0408aed3131
 
 [System.Collections.ArrayList]$AvailablePool=$Names
-
-## To do: Handle case where primary is not in the supplied user list
-## ??
 
 ## If we have run the script to pair people before, import those results
 if ($PreviousPairDirectory) {
@@ -308,12 +342,12 @@ if ($names.Count % 2 -ne 0) {
     ## odd number
     
     Write-Warning "Odd number of people, please select a person to have two pals. $($names.count)"
-    Do  {
-             
-        ## to do: remove $names, might be too crowded          
-        $doubleChooser=Read-Host "Please choose a person to have 2 pals`n $names"
-        ## to do: have to do something about case-sensitivity
-    } while ($names -cnotcontains $doubleChooser)
+    Do  {             
+        
+        # $doubleChooser=Read-Host "Please choose a person to have 2 pals`n $names"
+         $doubleChooser = $names |Out-GridView -OutputMode Single -Title "Odd number of people, please select a person to have two pals."
+        
+    } while (!$doubleChooser)
 
     
     Write-Verbose "Removing $doubleChooser from available name pool"
