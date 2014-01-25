@@ -16,21 +16,10 @@
     .PARAMETER UserList
         specifies the path to the text file that contains the list of names
 
-    .PARAMETER Primary
-        specifies the names of primary members of the team    
-
-    .PARAMETER PreviousPairDirectory
-        specifies the directory that previous pairings will be stored. These will be used match against subsequent pairings to avoid repeats
-
     .EXAMPLE
         Get-Pairs.ps1 -UserList C:\scratch\names.txt
         This example will generate pairs from names in the list names.txt
 
-    .EXAMPLE
-   
-        .\Get-Pairs.ps1 -UserList C:\scratch\names.txt -primary Matt
-
-        This example will generate pairs from names in the list names.txt, while taking Matt as a primary.
 #>
 
 [CMDLETBINDING()]
@@ -46,12 +35,8 @@ Function Get-PairForOdd {
         .SYNOPSIS
         Handles the case where one person will be paired to two others
 
-        .DESCRIPTION
+        .DESCRIPTION        
         
-        .NOTES
-        In the case of odd number of people, someone ($doubleChooser) needs to be paired with two others. However, there is a case where the selected person may also be a primary. 
-        Because script first gets a pair for each primary, this means the selected person ($doubleChooser) has already been paired once, and only needs to be paired one more person
-        This is the reason we have $pick parameter 
 
     #>
     param (
@@ -59,9 +44,6 @@ Function Get-PairForOdd {
         [string]$doubleChooser
         
     )
-
-        ## we will always remove the users we are pairing or paired from the pool of $pool 
-        ## so that they do not come up as a result of get-random    
         $left = $doubleChooser       
 
         Write-Verbose "Get-PairForOdd: $left will pick 2 from available people"                        
@@ -84,10 +66,8 @@ Function Get-PairForEven {
     Create Pairs within set constraints
 
     .DESCRIPTION
-    Gets a pool of people to choose from and create pairs taking into account whether they were paired before and satisfy that criteria
+    Gets a pool of people to choose from and create pairs
     
-    .NOTES
-    At this point, main script should have taken care of primaries, so no need to check if the paired people are primaries  
 #>
     param(
         [Parameter(Mandatory)]
