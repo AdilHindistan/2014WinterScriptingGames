@@ -164,7 +164,7 @@ Function Get-PairForPrime {
                ## Removing $right at this point would give some benefits:
                ## Get-Random may just get a person again and again that does not satisfy previous-pair-constraints 
                # Write-Verbose "Get-PairForPrime: Removing $right from available name pool"
-               # $pool.Remove($right)
+               # [void]$pool.Remove($right)
 
                 Write-Verbose "Get-PairForPrime: pool count $($pool.Count)" 
             }
@@ -173,7 +173,7 @@ Function Get-PairForPrime {
 
         ## Removing it at this point 
         Write-Verbose "Get-PairForPrime: Removing $right from available name pool"
-        $pool.Remove($right)
+        [void]$pool.Remove($right)
         
         Write-Verbose "Get-PairForPrime: Pairing result: $left | $right"        
         
@@ -211,8 +211,9 @@ Function Get-PairForOdd {
         ## so that they do not come up as a result of get-random    
         $left = $doubleChooser
         
-        Write-Verbose "Get-PairForOdd: Removing $left from the pool of available people"        
-        $pool.Remove($left)
+        ## Not needed as [ArrayList] is shared with main script
+        ## Write-Verbose "Get-PairForOdd: Removing $left from the pool of available people"        
+        ## [void]$pool.Remove($left)
 
         Write-Verbose "Get-PairForOdd: $left will pick $pick from available people"                        
         for ($i=0; $i -lt $pick ; $i++ ) {
@@ -226,14 +227,15 @@ Function Get-PairForOdd {
                     $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs -verbose
                 }
     
-                Write-Verbose "Get-PairForOdd: Removing $right from the pool of people"
-                $pool.Remove($right)
-
 
             } while ($Rematch)
-
+            
             Write-Verbose "Get-PairForOdd: Pairing result: $left | $right"        
             [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }                
+
+            Write-Verbose "Get-PairForOdd: Removing $right from the pool of people"
+            [void]$pool.Remove($right)
+
 
         }        
 }
@@ -264,7 +266,7 @@ Function Get-PairForEven {
             ## idea is that we will pop $pool from left (index=0) one by one
             Write-Verbose "Get-PairForEven: Pool size: $($pool.count)"
             $left = $pool[0]            
-            $pool.RemoveAt(0)
+            [void]$pool.RemoveAt(0)
         
             Write-Verbose "Get-PairForEven: Left: $left"
             Do {
@@ -287,11 +289,12 @@ Function Get-PairForEven {
 
             } while ( $Rematch )
 
-            Write-Verbose "Get-PairForEven: Removing $right from the pool of people"
-            $pool.Remove($right)
-
             Write-Verbose "Get-PairForEven: Pairing result: $left | $right"
             [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }   
+
+            Write-Verbose "Get-PairForEven: Removing $right from the pool of people"
+            [void]$pool.Remove($right)
+
         
     }
 
@@ -305,12 +308,13 @@ Function Get-PairForEven {
 ## assuming
 Get-Content $UserList | % { $Email=@{}}{ $Email[($_ -split ',')[0]]=($_ -split ',')[1]}
 $Names=@($Email.Keys)
-<<<<<<< HEAD
-$gamesName = "WSG2014_Event1_Pairs"
-$transcriptPath = "$pwd\$gamesName.txt"
-Start-Transcript -Path $transcriptPath
-=======
->>>>>>> 272ec6082f0b3bbd86a8a24d3158b0408aed3131
+## <<<<<<< HEAD
+## $gamesName = "WSG2014_Event1_Pairs"
+
+## $transcriptPath = "$pwd\$gamesName.txt"
+## Start-Transcript -Path $transcriptPath
+## =======
+## >>>>>>> 272ec6082f0b3bbd86a8a24d3158b0408aed3131
 
 [System.Collections.ArrayList]$AvailablePool=$Names
 
@@ -358,14 +362,14 @@ if ($primary) {
         Write-Verbose "No previous pairs"
         $PrimePair = Get-PairForPrime -pool $AvailablePool -prime $primary -verbose
     }
-
-    Write-Verbose "We will now remove members of PrimePair from available name pool in the main script"
+    
     Write-Verbose "Available Pool: $($AvailablePool.Count)"
-    foreach ($member in $PrimePair.RightPair) {
-        Write-Verbose "Removing $member from available name pool"
-        $AvailablePool.Remove($member)
-    }
-    Write-Verbose "Available pool: $($AvailablePool.count)"
+##  [arraylist] in the function seems to be passed by reference, so changes to it in the functions are reflected in the main script
+##    foreach ($member in $PrimePair.RightPair) {
+##        Write-Verbose "Removing $member from available name pool"
+##        $AvailablePool.Remove($member)
+##    }
+##    Write-Verbose "Available pool: $($AvailablePool.count)"
     
     $AllPairs=$PrimePair
 }
@@ -405,12 +409,10 @@ if ($names.Count % 2 -ne 0) {
     }
     
     ## We can now remove oddpair members from the available name pool
-    Foreach ($member in $OddPair.RightPair) {
-
-            Write-Verbose "Removing $member from available name pool"
-            $AvailablePool.Remove($member)
-        
-    }
+    ## Foreach ($member in $OddPair.RightPair) {
+    ##        Write-Verbose "Removing $member from available name pool"
+    ##        $AvailablePool.Remove($member)        
+    ## }
 
     $AllPairs += $oddpair | % {$_}
 }
@@ -433,5 +435,5 @@ $AllPairs |export-csv -NoTypeInformation -Path $Outputfile
 $AllPairs |Format-Table -AutoSize
 
 "Results are written to $Outputfile"
-Stop-Transcript 
+## Stop-Transcript 
 #endregion output
