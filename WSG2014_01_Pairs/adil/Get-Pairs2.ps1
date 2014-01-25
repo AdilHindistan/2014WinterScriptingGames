@@ -18,6 +18,9 @@ Param(
 Function Import-PreviousPair {
 <#
     .SYNOPSIS
+    Imports the previous pairs to check against
+
+    .NOTES
     Create a hash table where each person is a key, for which value is an array of previously paired people
     
     .EXAMPLE
@@ -124,6 +127,11 @@ Function Get-PairForPrime {
 }
 
 Function Get-PairForOdd {
+    <#
+        .SYNOPSIS
+        Handles the case where one person will be paired to two others
+
+    #>
     param (
         [System.Collections.ArrayList]$pool,
         
