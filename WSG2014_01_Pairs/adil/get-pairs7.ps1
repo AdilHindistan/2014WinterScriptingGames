@@ -1,4 +1,3 @@
-﻿
 #requires -version 3.0
 
 <#
@@ -6,40 +5,38 @@
        Creates pairs of names from a supplied list
 
     .DESCRIPTION
-       The Get-Pairs2.ps1 script when run when run without any parameters will search the current directory for a list of names and pair thems. 
-       If the list contains an odd number it prompts the user to select the name to form a 3 member team.
-
-       When run with the -primary parameter, the argument passed is considered a primary (or primaries) and the script will first math these with the rest of the names before pairing any remaining people. 
-       It also checks to to ensure that people are not repeatedly matched during subsequent runs of the script 
+       The Get-Pairs.ps1 script when run without any parameters will search the current directory for a list of names and pair them.
+       The script assumes that the initial series of names will be provided as names.txt file in the current working directory.
+       If the list of names are odd, it prompts the user to select the name that will be paired more than once.
+       When executed with the -primary switch, the script will first match the primary names.
+       It also checks that people are not repeatedly matched during subsequent runs of the script 
 
 
     .PARAMETER UserList
-        Specifies the path to the text file that contains the list of names
+        specifies the path to the text file that contains the list of names
 
     .PARAMETER Primary
-        Specifies the names of primary members of the team    
+        specifies the names of primary members of the team    
 
     .PARAMETER PreviousPairDirectory
-        Specifies the directory that where previous pairings were stored. These will be used match against subsequent pairings to avoid repeats
-
-    .PARAMETER ManagerEmail
-    If this is specified, then Userlist must have email addresses as input. It will email each person, and CC the manager.
+        specifies the directory that previous pairings will be stored. These will be used match against subsequent pairings to avoid repeats
 
     .EXAMPLE
-        Get-Pairs2.ps1
+        Get-Pairs.ps1 -UserList C:\scratch\names.txt
         This example will generate pairs from names in the list names.txt
 
     .EXAMPLE
    
-        Get-Pairs2.ps1 -UserList "C:\scratch\name_email.txt" -Primary 'Matt','Julie' -ManagerEmail 'john@fabrikam.com'
-        This example will generate pairs from names in the list names.txt, while taking Matt and Julie a primary. It will send an email to each person CC'ing manager 
+        .\Get-Pairs.ps1 -UserList C:\scratch\names.txt -primary Matt
+
+        This example will generate pairs from names in the list names.txt, while taking Matt as a primary.
 #>
 
 [CMDLETBINDING()]
 Param(
         [Parameter(Position=1)] 
         [ValidateScript({Test-Path $_ -PathType 'Leaf'})] 
-        [String]$UserList = "$pwd\names3.txt",
+        [String]$UserList = "$pwd\names.csv",
         
         [Parameter(Position=2)]
         [ValidateScript({Test-Path "$_\pairs_output_*.csv"})]
@@ -47,12 +44,10 @@ Param(
     
         [Parameter(Position=3)] 
         [ValidateCount(0,5)]        
-        [string[]]$primary,
-
-        [Parameter(Position=4)]
-        [Net.Mail.MailAddress]$ManagerEmail
+        [string[]]$primary #=@('Josh','David','Julie') ## Need to validate these names are in $UserList
 )
 
+#region Helper-Functions
 Function Import-PreviousPair {
 <#
     .SYNOPSIS
@@ -292,17 +287,14 @@ Function Get-PairForEven {
 }
 
 Function Send-PairEmail {
-<#
-    .SYNOPSIS
-    Send an email
-#>
+[CmdletBinding()]
 Param 
    ([String]$To, 
-    [String]$From ="PairingSystem@fabrikam.com",
-    [String]$CC,
+    [String]$From ="sunny.chakraborty@aberdeen-asset.com",
+    [String]$CC = "sunny_c7@yahoo.com",
     [String]$Subject,    
     [String]$Body,
-    [String]$SmtpServer="mail.fabrikam.com"
+    [String]$SmtpServer = "usmail"
     )
 
 $Splat = @{
@@ -318,23 +310,17 @@ Body =$Body
     
 }
 
-
-############  Main Script ########################
+#endregion
 
 ## To do: Handle import from csv (name,email)
 ## [array]$names = ((Get-Content $path) -split ',').Trim()
 ## [String[]]$emails = Get-Content $UserList 
 
-## assuming name_email.txt kind of input
-Get-Content $UserList | % { $Email=@{}}{ $Email[($_ -split ',')[0]]=($_ -split ',')[1]}
-$Names=@($Email.Keys)
-## <<<<<<< HEAD
-## $gamesName = "WSG2014_Event1_Pairs"
-
-## $transcriptPath = "$pwd\$gamesName.txt"
-## Start-Transcript -Path $transcriptPath
-## =======
-## >>>>>>> 272ec6082f0b3bbd86a8a24d3158b0408aed3131
+# MAIN
+#
+$names = @()
+$inputData = import-csv $UserList 
+$inputData | foreach {$names += $_.Names}
 
 [System.Collections.ArrayList]$AvailablePool=$Names
 $AllPairs=@()
@@ -457,42 +443,47 @@ if ($AvailablePool.count -ge 2) {
 #region output
 $Outputfile = "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
 
-$AllPairs |export-csv -NoTypeInformation -Path $Outputfile
-$AllPairs |Format-Table -AutoSize
-
 "Results are written to $Outputfile"
-## Stop-Transcript 
-#endregion output
+$AllPairs |export-csv -NoTypeInformation -Path $Outputfile
 
+#Send Email to Pairs
 
-#If ManagerEmail option exist, we are being asked to send email to all pairs and CC manager
-if ($ManagerEmail) {
+#Pick the latest AllPairs Result
+$pairedResult = (gci -Path "$pwd\pairs_output_*.csv" | sort LastWriteTime | select -First 1).FullName | Import-Csv
 
+#Create a new Object of Matches and their email addrss to Email
+$new = "" | Select Name,Match,Email
 
-$paired=@{}
-$AllPairs | % { 
-    $paired[$_.leftpair] =$_.rightpair
-    $paired[$_.rightpair]=$_.leftpair
-}
-
-$paired.GetEnumerator() | % {
+    foreach ($item in $pairedResult) {
+        $new.Name = $item.LeftPair
+        $new.Match = $item.RightPair
+        $new.Email = ($inputData | where {$_.names -Like $item.LeftPair} | Select EmailAddress).EmailAddress
+        $new | export-csv -NoTypeInformation ReportForEmail.csv -Append
+        }
+    foreach ($item in $pairedResult) {
+        $new.Name = $item.RightPair
+        $new.Match = $item.LeftPair
+        $new.Email = ($inputData | where {$_.names -Like $item.LeftPair} | Select EmailAddress).EmailAddress
+        $new | export-csv -NoTypeInformation "$pwd\ReportForEmail.csv" -Append
+        }
+$x = Import-Csv "$pwd\ReportForEmail.csv" 
+foreach ($item in $x){
 $Body = @"
-    Hi $($_.key)
+    Hi $($item.Name)
     Welcome to the automated Pair matching System.
-    You are paired with $($_.value)
+    You are paired with $($item.Match)
 
     Thank You.
 "@
     
     $obj = @{
-            To = $($Email[$_.Key])
-            CC = $ManagerEmail
-            Body = $Body
-            Subject= "Your pairing details".ToString()
-        }
+    To = $($item.Email)
+    Body = $Body
+    Subject= "Your pairing details".ToString()
+}
 
-    "Sending email to $($_.Key)"
-    Send-PairEmail @obj
-} 
-} 
+"Sending emails to $($item.Name)"
+Send-PairEmail @obj
+}
 
+#endregion output
