@@ -15,6 +15,36 @@ Param(
         [string[]]$primary =@('Sunny','David','John','Julie') ## Need to validate these names are in $UserList
 )
 
+Function Import-PreviousPair {
+<#
+    .SYNOPSIS
+    Create a hash table where each person is a key, for which value is an array of previously paired people
+    
+    .EXAMPLE
+     PS> $hash
+        Name                           Value                                                                            
+        ----                           -----                                                                            
+        Bezen                          {Robert}                                                                         
+        Tom                            {David}                                                                          
+        Greg                           {Hazem, Mason} 
+    
+    .OUTPUT
+    [Hashtable]
+
+#>
+    param([string]$PreviousPairDirectory)
+
+    $hash=@{}
+    Foreach ($file in (Get-ChildItem "$PreviousPairDirectory\pairs_output_*.csv")){
+        Write-Verbose "Processing $($file.name)"
+        import-csv $file  | foreach {
+         # Creating a hashtable of users with the value containing all the previous pairs for that user
+            $Hash[$_.LeftPair] +=,$_.RightPair       
+            $Hash[$_.RightPair] +=,$_.LeftPair 
+        }
+    }
+    $hash
+}
 
 Function Check-PreviousPair {
 <#
@@ -189,50 +219,21 @@ Function Get-PairForEven {
 
 }
 
-Function Get-PreviousPair {
-<#
-    .SYNOPSIS
-    Create a hash table where each person is a key, for which value is an array of previously paired people
-    
-    .EXAMPLE
-     PS> $hash
-        Name                           Value                                                                            
-        ----                           -----                                                                            
-        Bezen                          {Robert}                                                                         
-        Tom                            {David}                                                                          
-        Greg                           {Hazem, Mason} 
-    
-    .OUTPUT
-    [Hashtable]
+############  Main Script ########################
 
-#>
-    param([string]$PreviousPairDirectory)
-
-    $hash=@{}
-    Foreach ($file in (Get-ChildItem "$PreviousPairDirectory\pairs_output_*.csv")){
-        Write-Verbose "Processing $($file.name)"
-        import-csv $file  | foreach {
-         # Creating a hashtable of users with the value containing all the previous pairs for that user
-            $Hash[$_.LeftPair] +=,$_.RightPair       
-            $Hash[$_.RightPair] +=,$_.LeftPair 
-        }
-    }
-    $hash
-}
-
-
-############  main script ########################
-# Change this to CSV
+## To do: Handle import from csv (name,email)
 ## [array]$names = ((Get-Content $path) -split ',').Trim()
 [String[]]$names = Get-Content $UserList
 [System.Collections.ArrayList]$AvailablePool=$Names
 
+## To do: Handle case where primary is not in the supplied user list
+## ??
 
 ## If we have run the script to pair people before, import those results
 if ($PreviousPairDirectory) {
 
     ## assuming we are saving results to script dir
-    $PreviousPair = Get-PreviousPair -PreviousPairDirectory $PreviousPairDirectory -verbose
+    $PreviousPair = Import-PreviousPair -PreviousPairDirectory $PreviousPairDirectory -verbose
     
     If (($VerbosePreference -eq "Continue") -and ($PreviousPair)) {
         Write-Verbose "Previous Pairs"
@@ -333,6 +334,11 @@ if ($PreviousPairDirectory) {
 
 $AllPairs +=$EvenPair | % {$_}
 
-## save to file
-$AllPairs |export-csv -NoTypeInformation "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
-$AllPairs |ft -AutoSize
+#region output
+$Outputfile = "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
+
+$AllPairs |export-csv -NoTypeInformation -Path $Outputfile
+$AllPairs |Format-Table -AutoSize
+
+"Results are written to $Outputfile"
+#endregion output
