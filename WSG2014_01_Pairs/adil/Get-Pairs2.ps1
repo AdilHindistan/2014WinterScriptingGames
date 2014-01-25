@@ -12,7 +12,7 @@ Param(
     
         [Parameter(Mandatory=$False,Position=3)] 
         [ValidateCount(0,5)]        
-        [string[]]$primary=@('Sunny','David','John','Julie') ## Need to validate these names are in $UserList
+        [string[]]$primary =@('Sunny','David','John','Julie') ## Need to validate these names are in $UserList
 )
 
 
@@ -58,6 +58,7 @@ Function Get-PairForPrime {
         [hashtable]$previousPairs
     )
 
+    Write-Verbose "Get-PairForPrime: pool count $($pool.Count)"                
     Foreach ($left in $prime) {
         Do {
             $Rematch = $false
@@ -71,7 +72,7 @@ Function Get-PairForPrime {
 
                 Write-Verbose "Get-PairForPrime: Removing $right from available name pool"
                 $pool.Remove($right)
-
+                Write-Verbose "Get-PairForPrime: pool count $($pool.Count)" 
             }
         
         } While ($Rematch)
@@ -79,8 +80,9 @@ Function Get-PairForPrime {
         Write-Verbose "Get-PairForPrime: Pairing result: $left | $right"        
         
         [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }  
-    }
 
+    }
+    Write-Verbose "Get-PairForPrime: pool count $($pool.Count)"                
 }
 
 Function Get-PairForOdd {
@@ -163,7 +165,7 @@ Function Get-PairForEven {
                 ## Prevent endless loop as the remaining person is not allowed to be paired as per constraints
                 if (($pool.Count -eq 1) -and $Rematch) {
 
-                    Write-Warning "$left and $right are the only two left but constraints do not allow them to be paired"
+                    Write-Warning "$left and $right are the only two left but constraints do not allow them to be paired" 
                     $Rematch = $false   ## We might consider throwing away current pairs, and starting from scratch instead of leaving the last two unpaired
                 }
 
@@ -234,6 +236,7 @@ if ($PreviousPairDirectory) {
 Write-Verbose "Available pool: $($AvailablePool.count)"
 
 #region handle_primes
+
 if ($primary) {
 
     Write-Verbose "Removing primes from available name pool as they cannot pair with each other"    
@@ -241,13 +244,13 @@ if ($primary) {
             Write-Verbose "Removing $member" 
             $AvailablePool.Remove($member) 
     }
-    Write-Verbose "Available Pool: ($AvailablePool.Count)"
+    Write-Verbose "Available Pool: $($AvailablePool.Count)"
 
     Write-Verbose "Get Pairs for Primes"
     If ($PreviousPairDirectory) {
         
         Write-Verbose "Pair output exists, need to check for previous pairs"
-        $PrimePair = Get-PairForPrime -pool $AvailablePool -prime $primary -previousPairs $PreviousPair -verbose
+        $PrimePair = Get-PairForPrime -pool $AvailablePool. -prime $primary -previousPairs $PreviousPair -verbose
     
     } else {
         
@@ -256,12 +259,14 @@ if ($primary) {
     }
 
     Write-Verbose "We will now remove members of PrimePair from available name pool in the main script"
+    Write-Verbose "Available Pool: $($AvailablePool.Count)"
     foreach ($member in $PrimePair.RightPair) {
         Write-Verbose "Removing $member from available name pool"
         $AvailablePool.Remove($member)
     }
     Write-Verbose "Available pool: $($AvailablePool.count)"
     
+    $AllPairs=$PrimePair
 }
 #endregion handle_primes
 
@@ -305,22 +310,20 @@ if ($names.Count % 2 -ne 0) {
             $AvailablePool.Remove($member)
         
     }
+    $AllPairs += $oddpair | % {$_}
 }
 #endregion handle_odd_number
 
 
-## even number
-    
+## even number   
 if ($PreviousPairDirectory) {
     $EvenPair = Get-PairForEven -pool $AvailablePool -previousPairs $PreviousPair  -Verbose
 } else {
     $EvenPair = Get-PairforEven -pool $AvailablePool -Verbose
 }
 
-
-
-$AllPairs = $PrimePair,$OddPair,$EvenPair
+$AllPairs +=$EvenPair | % {$_}
 
 ## save to file
-#$AllPairs |export-csv -NoTypeInformation "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
+$AllPairs |export-csv -NoTypeInformation "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
 $AllPairs |ft -AutoSize
