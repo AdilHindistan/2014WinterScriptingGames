@@ -5,10 +5,10 @@
        Creates pairs of names from a supplied list
 
     .DESCRIPTION
-       The Get-Pairs.ps1 script when run when run without aany parameters will search the current directory for a list of names and pair them to form secret pals. 
-       If the list contains an odd number it prompts the user to select the name that will have more than one secret pal.
+       The Get-Pairs.ps1 script when run when run without any parameters will search the current directory for a list of names and pair thems. 
+       If the list contains an odd number it prompts the user to select the name to form a 3 member team.
 
-       When run with the -primary parameter, the names in an alternate list are considered primary and the script will first math these with the rest of the names before pairing any remaining people. 
+       When run with the -primary parameter, the argument passed is considered a primary (or primaries) and the script will first math these with the rest of the names before pairing any remaining people. 
        It also checks to to ensure that people are not repeatedly matched during subsequent runs of the script 
 
 
@@ -22,12 +22,12 @@
         specifies the directory that previous pairings will be stored. These will be used match against subsequent pairings to avoid repeats
 
     .EXAMPLE
-        Get-Pairs.ps1 -UserList C:\scratch\names.txt
+        Get-Pairs2.ps1
         This example will generate pairs from names in the list names.txt
 
     .EXAMPLE
    
-        .\Get-Pairs.ps1 -UserList C:\scratch\names.txt -primary Matt
+        .\Get-Pairs2.ps1 -UserList C:\scratch\names.txt -primary Matt,Julie
 
         This example will generate pairs from names in the list names.txt, while taking Matt as a primary.
 #>
