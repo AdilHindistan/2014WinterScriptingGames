@@ -289,21 +289,21 @@ Function Get-PairForEven {
 Function Send-PairEmail {
 [CmdletBinding()]
 Param 
-   ([String[]]$To, 
-    [String[]]$From,
-    [String[]]$CC = "sunny_c7@yahoo.com",
-    [String[]]$Subject,    
-    [String[]]$Body,
+   ([String]$To, 
+    [String]$From ="sunny.chakraborty@aberdeen-asset.com",
+    [String]$CC = "sunny_c7@yahoo.com",
+    [String]$Subject,    
+    [String]$Body,
     [String]$SmtpServer = "usmail"
     )
 
 $Splat = @{
-To = $To 
-From = $From 
+To = $To
+From = $From
 CC = $CC
-Subject = $Subject    
+Subject = $Subject
 SmtpServer = $SmtpServer
-Body ="$($Body | ConvertTo-Html -Title $Subject)"
+Body =$Body
 }
 
     Send-MailMessage @Splat
@@ -445,13 +445,45 @@ $Outputfile = "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_
 
 "Results are written to $Outputfile"
 $AllPairs |export-csv -NoTypeInformation -Path $Outputfile
+
 #Send Email to Pairs
 
-$AllPairs 
-$pairedResult = Import-csv "pairs_output_20140125_131932.csv"
+#Pick the latest AllPairs Result
+$pairedResult = (gci -Path "$pwd\pairs_output_*.csv" | sort LastWriteTime | select -First 1).FullName | Import-Csv
 
-foreach ($member in $pairedResult) {
-    Send-PairEmail -To
-    }
+#Create a new Object of Matches and their email addrss to Email
+$new = "" | Select Name,Match,Email
+
+    foreach ($item in $pairedResult) {
+        $new.Name = $item.LeftPair
+        $new.Match = $item.RightPair
+        $new.Email = ($inputData | where {$_.names -Like $item.LeftPair} | Select EmailAddress).EmailAddress
+        $new | export-csv -NoTypeInformation ReportForEmail.csv -Append
+        }
+    foreach ($item in $pairedResult) {
+        $new.Name = $item.RightPair
+        $new.Match = $item.LeftPair
+        $new.Email = ($inputData | where {$_.names -Like $item.LeftPair} | Select EmailAddress).EmailAddress
+        $new | export-csv -NoTypeInformation "$pwd\ReportForEmail.csv" -Append
+        }
+$x = Import-Csv "$pwd\ReportForEmail.csv" 
+foreach ($item in $x){
+$Body = @"
+    Hi $($item.Name)
+    Welcome to the automated Pair matching System.
+    You are paired with $($item.Match)
+
+    Thank You.
+"@
+    
+    $obj = @{
+    To = $($item.Email)
+    Body = $Body
+    Subject= "Your pairing details".ToString()
+}
+
+"Sending emails to $($item.Name)"
+Send-PairEmail @obj
+}
 
 #endregion output
