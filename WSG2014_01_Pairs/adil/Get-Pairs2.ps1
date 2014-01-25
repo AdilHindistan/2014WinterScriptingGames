@@ -12,7 +12,7 @@ Param(
     
         [Parameter(Mandatory=$False,Position=3)] 
         [ValidateCount(0,5)]        
-        [string[]]$primary =@('Sunny','David','John','Julie') ## Need to validate these names are in $UserList
+        [string[]]$primary =@('Sunny','David','Julie') ## Need to validate these names are in $UserList
 )
 
 Function Import-PreviousPair {
@@ -231,7 +231,13 @@ Function Get-PairForEven {
 
 ## To do: Handle import from csv (name,email)
 ## [array]$names = ((Get-Content $path) -split ',').Trim()
-[String[]]$names = Get-Content $UserList
+[String[]]$emails = Get-Content $UserList 
+## assuming
+Get-Content $UserList | % { $Email=@{}}{ $Email[($_ -split ',')[0]]=($_ -split ',')[1]}
+$Names=@($Email.Keys)
+
+
+
 [System.Collections.ArrayList]$AvailablePool=$Names
 
 ## To do: Handle case where primary is not in the supplied user list
@@ -255,6 +261,13 @@ Write-Verbose "Available pool: $($AvailablePool.count)"
 #region handle_primes
 
 if ($primary) {
+
+    Foreach ($p in $primary) {
+        if ($p -notin $Names) { 
+            Write-Warning "Primary $p is not in the provided name list. Exiting"
+            Exit
+        }
+    }
 
     Write-Verbose "Removing primes from available name pool as they cannot pair with each other"    
     Foreach ($member in $primary) {             
