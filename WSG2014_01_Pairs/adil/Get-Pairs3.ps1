@@ -39,7 +39,7 @@ Function Import-PreviousPair {
 
     $hash=@{}
     Foreach ($file in (Get-ChildItem "$PreviousPairDirectory\pairs_output_*.csv")){
-        Write-Verbose "Processing $($file.name)"
+        Write-Verbose "Processing $($file.name) `r`n"
         import-csv $file  | foreach {
          # Creating a hashtable of users with the value containing all the previous pairs for that user
             $Hash[$_.LeftPair] +=,$_.RightPair       
@@ -64,14 +64,14 @@ Function Check-PreviousPair {
     $previouslyPaired = $previousPairs[$left]                
     if ($right -in $previouslyPaired) {
                 
-        Write-Verbose "Check-PreviousPair: $left paired with $right before! Additional checks needed."
+        Write-Verbose "Check-PreviousPair: $left paired with $right before! Additional checks needed. `r`n"
 
         if ($previouslyPaired.Count -gt 4) {
-            write-verbose "Check-PreviousPair: $left has paired with at least 4 other people before, OK to pair them again"                    
+            write-verbose "Check-PreviousPair: $left has paired with at least 4 other people before, OK to pair them again `r`n"                    
             $false
 
         } else {
-            Write-Verbose "Check-PreviousPair: $left has not yet been paired with 4 other people, so needs to be paired with someone else"
+            Write-Verbose "Check-PreviousPair: $left has not yet been paired with 4 other people, so needs to be paired with someone else `r`n"
             $true
             ## todo : edge case, what if there is a prime vs prime left?
         }            
@@ -92,7 +92,7 @@ Function Get-PairForPrime {
         [hashtable]$previousPairs
     )
 
-    Write-Verbose "Get-PairForPrime: pool count $($pool.Count)"                
+    Write-Verbose "Get-PairForPrime: pool count $($pool.Count) `r`n"                
     Foreach ($left in $prime) {
         Do {
             $Rematch = $false
@@ -101,7 +101,7 @@ Function Get-PairForPrime {
             ## We will also make sure pair satisfy 'previous pair constraints' if there are any            
             if ($previousPairs) {
 
-                Write-Verbose "Get-PairForPrime: Checking if $left can be paired with $right"                
+                Write-Verbose "Get-PairForPrime: Checking if $left can be paired with $right `r`n"                
                 $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs -verbose
 
                ## Removing $right at this point would give some benefits:
@@ -109,21 +109,21 @@ Function Get-PairForPrime {
                # Write-Verbose "Get-PairForPrime: Removing $right from available name pool"
                # $pool.Remove($right)
 
-                Write-Verbose "Get-PairForPrime: pool count $($pool.Count)" 
+                Write-Verbose "Get-PairForPrime: pool count $($pool.Count) `r`n" 
             }
         
         } While ($Rematch)
 
         ## Removing it at this point 
-        Write-Verbose "Get-PairForPrime: Removing $right from available name pool"
+        Write-Verbose "Get-PairForPrime: Removing $right from available name pool `r`n"
         $pool.Remove($right)
         
-        Write-Verbose "Get-PairForPrime: Pairing result: $left | $right"        
+        Write-Verbose "Get-PairForPrime: Pairing result: $left | $right `r`n"        
         
         [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }  
 
     }
-    Write-Verbose "Get-PairForPrime: pool count $($pool.Count)"                
+    Write-Verbose "Get-PairForPrime: pool count $($pool.Count) `r`n"                
 }
 
 Function Get-PairForOdd {
@@ -147,10 +147,10 @@ Function Get-PairForOdd {
         ## so that they do not come up as a result of get-random    
         $left = $doubleChooser
         
-        Write-Verbose "Get-PairForOdd: Removing $left from the pool of available people"        
+        Write-Verbose "Get-PairForOdd: Removing $left from the pool of available people `r`n"        
         $pool.Remove($left)
 
-        Write-Verbose "Get-PairForOdd: $left will pick $pick from available people"                        
+        Write-Verbose "Get-PairForOdd: $left will pick $pick from available people `r`n"                        
         for ($i=0; $i -lt $pick ; $i++ ) {
             
             Do {
@@ -158,17 +158,17 @@ Function Get-PairForOdd {
                 $Rematch = $false    
                 $right = Get-Random -InputObject $pool                
                 if ($previousPairs) {
-                    Write-Verbose "Get-PairForOdd: Checking if $left can be paired with $right"
+                    Write-Verbose "Get-PairForOdd: Checking if $left can be paired with $right `r`n"
                     $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs -verbose
                 }
     
-                Write-Verbose "Get-PairForOdd: Removing $right from the pool of people"
+                Write-Verbose "Get-PairForOdd: Removing $right from the pool of people `r`n"
                 $pool.Remove($right)
 
 
             } while ($Rematch)
 
-            Write-Verbose "Get-PairForOdd: Pairing result: $left | $right"        
+            Write-Verbose "Get-PairForOdd: Pairing result: $left | $right `r`n"        
             [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }                
 
         }        
@@ -192,19 +192,19 @@ Function Get-PairForEven {
         
         
             ## idea is that we will pop $pool from left (index=0) one by one
-            Write-Verbose "Get-PairForEven: Pool size: $($pool.count)"
+            Write-Verbose "Get-PairForEven: Pool size: $($pool.count) `r`n"
             $left = $pool[0]            
             $pool.RemoveAt(0)
         
-            Write-Verbose "Get-PairForEven: Left: $left"
+            Write-Verbose "Get-PairForEven: Left: $left `r`n"
             Do {
                 
                 $Rematch = $false
                 $right = Get-Random -InputObject $pool
-                Write-Verbose "Get-PairForEven: Right : $right"
+                Write-Verbose "Get-PairForEven: Right : $right `r`n"
 
                 if ($previousPairs) {
-                    Write-Verbose "Get-PairForEven: Checking if $left can be paired with $right"
+                    Write-Verbose "Get-PairForEven: Checking if $left can be paired with $right `r`n"
                     $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs  -verbose
                 }
 
@@ -217,10 +217,10 @@ Function Get-PairForEven {
 
             } while ( $Rematch )
 
-            Write-Verbose "Get-PairForEven: Removing $right from the pool of people"
+            Write-Verbose "Get-PairForEven: Removing $right from the pool of people `r`n"
             $pool.Remove($right)
 
-            Write-Verbose "Get-PairForEven: Pairing result: $left | $right"
+            Write-Verbose "Get-PairForEven: Pairing result: $left | $right `r`n"
             [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }   
         
     }

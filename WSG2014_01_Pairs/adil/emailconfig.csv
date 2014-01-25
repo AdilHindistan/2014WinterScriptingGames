@@ -1,0 +1,2 @@
+SMTPServer,From,To,Body,Subject,BodyAsHTML,ManagerEmail
+usmail,,,,Your partner for the upcoming project.,$true,sunnyc7@gmail.com

@@ -7,3 +7,12 @@ Email talking
 Sunny
 Mailing
 Transcript peice.
+
+
+CHANGES:
+a) Added 'r'n to Each Write-Verbose Line for Transcripts
+b) Start-Transcript to capture execution in-line in script.
+c) Used Ben-Wilkinson Send-HTMLEmail with splatting.
+emailconfig.csv as parameter
+add CC:field for manager.
+#reuse of published scripts is allowed
