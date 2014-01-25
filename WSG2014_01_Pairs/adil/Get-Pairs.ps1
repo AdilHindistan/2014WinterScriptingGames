@@ -71,9 +71,7 @@ Function Get-PairForEven {
 #>
     param(
         [Parameter(Mandatory)]
-        [System.Collections.ArrayList]$pool,        
-
-        [hashtable]$previousPairs
+        [System.Collections.ArrayList]$pool        
     )
 
 
