@@ -17,3 +17,5 @@ Julie
 David
 Robert
 Sunny
+John
+Lara
