@@ -1,0 +1,3466 @@
+PS C:\Users\Sunny> cd C:\github\PhillyPosh\WSG2014_01_Pairs\adil
+
+PS C:\github\PhillyPosh\WSG2014_01_Pairs\adil> gcm *trace*
+
+CommandType     Name                                               ModuleName  
+-----------     ----                                               ----------  
+Function        Disable-PSTrace                                    PSDiagnos...
+Function        Disable-PSWSManCombinedTrace                       PSDiagnos...
+Function        Disable-WdacBidTrace                               Wdac        
+Function        Disable-WSManTrace                                 PSDiagnos...
+Function        Enable-PSTrace                                     PSDiagnos...
+Function        Enable-PSWSManCombinedTrace                        PSDiagnos...
+Function        Enable-WdacBidTrace                                Wdac        
+Function        Enable-WSManTrace                                  PSDiagnos...
+Function        Get-DtcTransactionsTraceSession                    MsDtc       
+Function        Get-DtcTransactionsTraceSetting                    MsDtc       
+Function        Get-WdacBidTrace                                   Wdac        
+Function        Set-DtcTransactionsTraceSession                    MsDtc       
+Function        Set-DtcTransactionsTraceSetting                    MsDtc       
+Function        Start-DtcTransactionsTraceSession                  MsDtc       
+Function        Start-Trace                                        PSDiagnos...
+Function        Stop-DtcTransactionsTraceSession                   MsDtc       
+Function        Stop-Trace                                         PSDiagnos...
+Function        Write-DtcTransactionsTraceSession                  MsDtc       
+Cmdlet          Get-TraceSource                                    Microsoft...
+Cmdlet          Set-TraceSource                                    Microsoft...
+Cmdlet          Trace-Command                                      Microsoft...
+Application     sxstrace.exe                                                   
+Application     tracerpt.exe                                                   
+Application     TRACERT.EXE                                                    
+
+
+
+PS C:\github\PhillyPosh\WSG2014_01_Pairs\adil> Trace-Command -Name ParameterBinding -PSHost -FilePath C:\github\PhillyPosh\WSG2014_01_Pairs\adil\Get-Pairs.ps1
+cmdlet Trace-Command at command pipeline position 1
+Supply values for the following parameters:
+Expression: 
+PS C:\github\PhillyPosh\WSG2014_01_Pairs\adil> $sb = {
+<#
+.Synopsis
+   Creates pairs of names from a supplied list
+
+.DESCRIPTION
+   The Get-Pairs.ps1 script when run when run without aany parameters will search the current directory for a list of names and pair them to form secret pals. 
+   If the list contains an odd number it prompts the user to select the name that will have more than one secret pal.
+
+   When run with the -primary parameter, the names in an alternate list are considered primary and the script will first math these with the rest of the names before pairing any remaining people. 
+   It also checks to to ensure that people are not repeatedly matched during subsequent runs of the script 
+
+
+.PARAMETER UserList
+
+.PARAMETER Primary
+
+.PARAMETER PreviousPairDirectory
+
+
+.EXAMPLE
+    Get-Pairs.ps1 -UserList C:\scratch\names.txt
+
+.EXAMPLE
+   
+    .\Get-Pairs.ps1 -UserList C:\scratch\names.txt -primary c:\scratch\primarylist.txt
+#>
+
+#requires -version 3.0
+
+[CMDLETBINDING()]
+Param(
+        [Parameter(Position=1)] 
+        [ValidateScript({Test-Path $_ -PathType 'Leaf'})] 
+        [String]$UserList = "$pwd\names3.txt",
+        
+        [Parameter(Position=2)]
+        [ValidateScript({Test-Path "$_\pairs_output_*.csv"})]
+        [String]$PreviousPairDirectory = "$pwd",
+    
+        [Parameter(Position=3)] 
+        [ValidateCount(0,5)]
+        [string[]]$primary#=@("Sunny","David","John","Adil")
+)
+
+
+Function Check-PreviousPair {
+<#
+    .SYNOPSIS
+    Check if pair satisfy constraints for previous pairs
+#>
+    param (
+            [string]$left,
+            [string]$right,
+            [hashtable]$previousPairs
+    )
+
+     ## Check against previous pair  constraint
+    $previouslyPaired = $previousPairs[$left]                
+    if ($right -in $previouslyPaired) {
+                
+        Write-Verbose "Check-PreviousPair: $left paired with $right before! Additional checks needed."
+
+        if ($previouslyPaired.Count -gt 4) {
+            write-verbose "Check-PreviousPair: $left has paired with at least 4 other people before, OK to pair them again"                    
+            $false
+
+        } else {
+            Write-Verbose "Check-PreviousPair: $left has not yet been paired with 4 other people, so needs to be paired with someone else"
+            $true
+            ## todo : edge case, what if there is a prime vs prime left?
+        }            
+    }
+}
+
+Function Get-Pair {
+<#
+    .SYNOPSIS
+    Create Pairs within set constraints
+#>
+    param(
+        [Parameter(Mandatory)]
+        [System.Collections.ArrayList]$pool,
+        [string]$pickTwo,
+        [string[]]$prime=@('AndY','haZEM','BeZEN','JULIE'),
+        [hashtable]$previousPairs
+    )
+
+    Write-Verbose "Get-Pair: pool size: $($pool.count)"        
+    #region handle_odd
+    ## This part of code handles odd case, where one person is paired to two pals
+    ## Todo: I think this part can be collapsed into the handle_even, as the same set of checks needs to be done here too
+    if ($pickTwo) {  
+    
+        ## we will always remove the users we are pairing or paired from the pool of $pool 
+        ## so that they do not come up as a result of get-random    
+        $left = $pickTwo
+        
+        Write-Verbose "Get-Pair: Removing $left from the pool of people"        
+        $pool.Remove($left)
+        
+        ## PickTwo will have 2 pairs, so we will get two random people within the set constraints   
+        for ($i=0; $i -lt 2 ; $i++ ) {
+            
+            ## To satisfy Primary constraint, we need to check both person (left and right of pair)
+            ## to make sure not both are primary
+            Do {
+                if ($left -in $prime) {                             
+                    Do {
+                        $right = Get-Random -InputObject $pool
+                    } while ($right -in $prime)
+                } else {                                     
+                    $right = Get-Random -InputObject $pool                
+                }
+
+                Write-Verbose "Get-Pair: Checking if $left can be paired with $right"
+                $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs
+
+            } while ($Rematch)
+
+            Write-Verbose "Get-Pair: Pairing result: $left | $right"        
+            [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }                
+
+            Write-Verbose "Get-Pair: Removing $right from the pool of people"
+            $pool.Remove($right)
+        }        
+
+    }
+    #endregion 
+
+    #region handle_even
+    ## Below code will handle an even number pairing 
+    While ($pool.Count -gt 0) {       
+        
+        
+            ## idea is that we will pop $pool from left (index=0) one by one
+            Write-Verbose "Pool size: $($pool.count)"
+            $left = $pool[0]            
+            $pool.RemoveAt(0)
+        
+            Write-Verbose "Get-Pair: Left: $left"
+            Do {
+
+                ## Check against Prime Constraint
+                if ($left -in $prime) {
+                    Do {                
+                        $right = Get-Random -InputObject $pool
+                        Write-Verbose "Get-Pair: Right : $right"
+                    
+                        $rematch =$false
+
+                        if ($right -in $prime) {
+                            Write-Verbose "Get-Pair: Rematch as both $left and $right are in prime list $prime."
+                            $rematch = $true
+                        }
+                    
+
+                    } while ($Rematch)
+                } else {
+                        $right = Get-Random -InputObject $pool
+                        Write-Verbose "Get-Pair: Right : $right"
+                }
+
+                ## Check against previous pair constraints 
+                Write-Verbose "Get-Pair: Checking if $left can be paired with $right"
+                $Rematch = Check-PreviousPair -left $left -right $right -previousPairs $previousPairs
+
+                ## Prevent endless loop as the remaining person is not allowed to be paired as per constraints
+                if (($pool.Count -eq 1) -and $Rematch) {
+
+                    Write-Warning "$left and $right are the only two left but constraints do not allow them to be paired"
+                    $Rematch = $false   ## We might consider throwing away current pairs, and starting from scratch instead of leaving the last two unpaired
+                }
+            } while ( $Rematch )
+
+            Write-Verbose "Get-Pair: Removing $right from the pool of people"
+            $pool.Remove($right)
+
+            Write-Verbose "Get-Pair: Pairing result: $left | $right"
+            [PSCustomObject]@{ "LeftPair"=$left ; "RightPair" = $right }   
+        
+    }
+    #endregion handle_even
+}
+
+
+Function Get-PreviousPair {
+<#
+    .SYNOPSIS
+    Create a hash table where each person is a key, for which value is an array of previously paired people
+    
+    .EXAMPLE
+     PS> $hash
+        Name                           Value                                                                            
+        ----                           -----                                                                            
+        Bezen                          {Robert}                                                                         
+        Tom                            {David}                                                                          
+        Greg                           {Hazem, Mason} 
+    
+    .OUTPUT
+    [Hashtable]
+
+#>
+    param([string]$PreviousPairDirectory)
+
+    $hash=@{}
+    Foreach ($file in (Get-ChildItem "$PreviousPairDirectory\pairs_output_*.csv")){
+        Write-Verbose "Processing $($file.name)"
+        import-csv $file  | foreach {
+         # Creating a hashtable of users with the value containing all the previous pairs for that user
+            $Hash[$_.LeftPair] +=,$_.RightPair       
+            $Hash[$_.RightPair] +=,$_.LeftPair 
+        }
+    }
+    $hash
+}
+
+
+############  main script ########################
+# Change this to CSV
+## [array]$names = ((Get-Content $path) -split ',').Trim()
+[array]$names = Get-Content $UserList
+
+
+## If we have run before, import those results
+if ($PreviousPairDirectory) {
+
+    ## assuming we are saving results to script dir
+    $PreviousPair = Get-PreviousPair -PreviousPairDirectory $PreviousPairDirectory -verbose
+    Write-Verbose "Previous Pairs"
+    If ($VerbosePreference -eq "Continue") {$PreviousPair}
+}
+
+
+
+## No need to randomize at this stage, as we will do that in the function
+## Write-Verbose "Randomizing members"
+## $names = Get-Random -InputObject $names -Count $names.Count
+$names+='Adil'   ## use to test odd number
+
+
+
+if ($names.Count % 2 -eq 0) {
+    ## even number
+    
+    if ($PreviousPair) {
+        $paired = Get-Pair -pool $names -previousPairs $PreviousPair  -Verbose
+    } else {
+        $paired = Get-Pair -pool $names -Verbose
+    }
+    
+} else {
+    ## odd number
+    
+    Write-Warning "Odd number of people, please select a person to have two pals."
+    Do  {
+             
+        ## to do: remove $names, might be too crowded          
+        $doubleChooser=Read-Host "Please choose a person to have 2 pals`n $names"
+        ## to do: have to do something about case-sensitivity
+    } while ($names -cnotcontains $doubleChooser)
+
+        
+    if ($PreviousPair) { 
+        $paired = Get-Pair -pool $names -pickTwo $doubleChooser -previousPairs $PreviousPair -Verbose
+    } else {
+        $paired = Get-Pair -pool $names -pickTwo $doubleChooser -Verbose
+    }
+}
+
+## save to file
+$paired |export-csv -NoTypeInformation "$PreviousPairDirectory\pairs_output_$(get-date -format 'yyyyMMdd_HHmmss').csv"
+$paired |ft -AutoSize
+}
+
+Trace-Command -Name ParameterBinding -PSHost -Expression $sb
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Test-Path]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Leaf] to parameter [PathT
+ype]
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [Microsoft.PowerS
+hell.Commands.TestPathType]
+DEBUG: ParameterBinding Information: 0 :             Trying to convert argument 
+value from System.String to Microsoft.PowerShell.Commands.TestPathType
+DEBUG: ParameterBinding Information: 0 :             CONVERT arg type to param t
+ype using LanguagePrimitives.ConvertTo
+DEBUG: ParameterBinding Information: 0 :             CONVERT SUCCESSFUL using La
+nguagePrimitives.ConvertTo: [Leaf]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Leaf] to param [PathT
+ype] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Test-Pat
+h]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil\names3.txt] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         Binding collection parameter Pa
+th: argument type [String], parameter type [System.String[]], collection type Ar
+ray, element type [System.String], no coerceElementType
+DEBUG: ParameterBinding Information: 0 :         Creating array with element typ
+e [System.String] and 1 elements
+DEBUG: ParameterBinding Information: 0 :         Argument type String is not ILi
+st, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :         Adding scalar element of type S
+tring to array position 0
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.String[]] to p
+aram [Path] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : BIND cmd line args to DYNAMIC parameter
+s.
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Te
+st-Path]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Test-Path]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Test-Pat
+h]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil\pairs_output_*.csv] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         Binding collection parameter Pa
+th: argument type [String], parameter type [System.String[]], collection type Ar
+ray, element type [System.String], no coerceElementType
+DEBUG: ParameterBinding Information: 0 :         Creating array with element typ
+e [System.String] and 1 elements
+DEBUG: ParameterBinding Information: 0 :         Argument type String is not ILi
+st, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :         Adding scalar element of type S
+tring to array position 0
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.String[]] to p
+aram [Path] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : BIND cmd line args to DYNAMIC parameter
+s.
+DEBUG: ParameterBinding Information: 0 :     DYNAMIC parameter object: [Microsof
+t.PowerShell.Commands.FileSystemItemProviderDynamicParameters]
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Te
+st-Path]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Get-Content]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Get-Cont
+ent]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil\names3.txt] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         Binding collection parameter Pa
+th: argument type [String], parameter type [System.String[]], collection type Ar
+ray, element type [System.String], no coerceElementType
+DEBUG: ParameterBinding Information: 0 :         Creating array with element typ
+e [System.String] and 1 elements
+DEBUG: ParameterBinding Information: 0 :         Argument type String is not ILi
+st, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :         Adding scalar element of type S
+tring to array position 0
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.String[]] to p
+aram [Path] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : BIND cmd line args to DYNAMIC parameter
+s.
+DEBUG: ParameterBinding Information: 0 :     DYNAMIC parameter object: [Microsof
+t.PowerShell.Commands.FileSystemContentReaderDynamicParameters]
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Ge
+t-Content]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND arg [C:\github\PhillyPosh\WSG2014_
+01_Pairs\adil] to parameter [PreviousPairDirectory]
+DEBUG: ParameterBinding Information: 0 :     Executing DATA GENERATION metadata:
+ [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :         result returned from DATA GENER
+ATION: C:\github\PhillyPosh\WSG2014_01_Pairs\adil
+DEBUG: ParameterBinding Information: 0 :     COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :         Parameter and arg types the sam
+e, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil] to param [PreviousPairDirectory] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Get-ChildItem
+]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Get-Chil
+dItem]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil\pairs_output_*.csv] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         Binding collection parameter Pa
+th: argument type [String], parameter type [System.String[]], collection type Ar
+ray, element type [System.String], no coerceElementType
+DEBUG: ParameterBinding Information: 0 :         Creating array with element typ
+e [System.String] and 1 elements
+DEBUG: ParameterBinding Information: 0 :         Argument type String is not ILi
+st, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :         Adding scalar element of type S
+tring to array position 0
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.String[]] to p
+aram [Path] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : BIND cmd line args to DYNAMIC parameter
+s.
+DEBUG: ParameterBinding Information: 0 :     DYNAMIC parameter object: [Microsof
+t.PowerShell.Commands.GetChildDynamicParameters]
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Ge
+t-ChildItem]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Write-Verbose
+]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Write-Ve
+rbose]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Processing pairs_output_2
+0140123_203317.csv] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Processing pairs_outp
+ut_20140123_203317.csv] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Wr
+ite-Verbose]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Import-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Import-C
+sv]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil\pairs_output_20140123_203317.csv] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         Binding collection parameter Pa
+th: argument type [FileInfo], parameter type [System.String[]], collection type 
+Array, element type [System.String], no coerceElementType
+DEBUG: ParameterBinding Information: 0 :         Creating array with element typ
+e [System.String] and 1 elements
+DEBUG: ParameterBinding Information: 0 :         Argument type FileInfo is not I
+List, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :         BIND arg [C:\github\PhillyPosh\
+WSG2014_01_Pairs\adil\pairs_output_20140123_203317.csv] to param [Path] SKIPPED
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil\pairs_output_20140123_203317.csv] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         Binding collection parameter Pa
+th: argument type [FileInfo], parameter type [System.String[]], collection type 
+Array, element type [System.String], no coerceElementType
+DEBUG: ParameterBinding Information: 0 :         Creating array with element typ
+e [System.String] and 1 elements
+DEBUG: ParameterBinding Information: 0 :         Argument type FileInfo is not I
+List, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :         BIND arg [C:\github\PhillyPosh\
+WSG2014_01_Pairs\adil\pairs_output_20140123_203317.csv] to param [Path] SKIPPED
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil\pairs_output_20140123_203317.csv] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String[]]
+DEBUG: ParameterBinding Information: 0 :             Trying to convert argument 
+value from System.Management.Automation.PSObject to System.String[]
+DEBUG: ParameterBinding Information: 0 :             ENCODING arg into collectio
+n
+DEBUG: ParameterBinding Information: 0 :             Binding collection paramete
+r Path: argument type [PSObject], parameter type [System.String[]], collection t
+ype Array, element type [System.String], coerceElementType
+DEBUG: ParameterBinding Information: 0 :             Creating array with element
+ type [System.String] and 1 elements
+DEBUG: ParameterBinding Information: 0 :             Argument type PSObject is n
+ot IList, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Strin
+g]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argum
+ent value from System.Management.Automation.PSObject to System.String
+DEBUG: ParameterBinding Information: 0 :                 CONVERT arg type to par
+am type using LanguagePrimitives.ConvertTo
+DEBUG: ParameterBinding Information: 0 :                 CONVERT SUCCESSFUL usin
+g LanguagePrimitives.ConvertTo: [C:\github\PhillyPosh\WSG2014_01_Pairs\adil\pair
+s_output_20140123_203317.csv]
+DEBUG: ParameterBinding Information: 0 :             Adding scalar element of ty
+pe String to array position 0
+DEBUG: ParameterBinding Information: 0 :         Executing VALIDATION metadata: 
+[System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.String[]] to p
+aram [Path] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Im
+port-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [ForEach-Objec
+t]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [ForEach-
+Object]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [
+         # Creating a hashtable of users with the value containing all the previ
+ous pairs for that user
+            $Hash[$_.LeftPair] +=,$_.RightPair       
+            $Hash[$_.RightPair] +=,$_.LeftPair 
+        ] to parameter [Process]
+DEBUG: ParameterBinding Information: 0 :         Binding collection parameter Pr
+ocess: argument type [ScriptBlock], parameter type [System.Management.Automation
+.ScriptBlock[]], collection type Array, element type [System.Management.Automati
+on.ScriptBlock], no coerceElementType
+DEBUG: ParameterBinding Information: 0 :         Creating array with element typ
+e [System.Management.Automation.ScriptBlock] and 1 elements
+DEBUG: ParameterBinding Information: 0 :         Argument type ScriptBlock is no
+t IList, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :         Adding scalar element of type S
+criptBlock to array position 0
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Management.Aut
+omation.ScriptBlock[]] to param [Process] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Marissa; Right
+Pair=Tom}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Marissa; R
+ightPair=Tom}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Agnes; RightPa
+ir=Josh}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Agnes; Rig
+htPair=Josh}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Matt; RightPai
+r=David}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Matt; Righ
+tPair=David}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Robin; RightPa
+ir=Pamela}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Robin; Rig
+htPair=Pamela}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Adam; RightPai
+r=Robert}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Adam; Righ
+tPair=Robert}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Bezen; RightPa
+ir=Pilar}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Bezen; Rig
+htPair=Pilar}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Avi; RightPair
+=Amy}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Avi; Right
+Pair=Amy}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Hazem; RightPa
+ir=Terry}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Hazem; Rig
+htPair=Terry}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Greg; RightPai
+r=Julie}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Greg; Righ
+tPair=Julie}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Write-Verbose
+]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Write-Ve
+rbose]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Processing pairs_output_2
+0140123_203332.csv] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Processing pairs_outp
+ut_20140123_203332.csv] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Wr
+ite-Verbose]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Import-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Import-C
+sv]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil\pairs_output_20140123_203332.csv] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         Binding collection parameter Pa
+th: argument type [FileInfo], parameter type [System.String[]], collection type 
+Array, element type [System.String], no coerceElementType
+DEBUG: ParameterBinding Information: 0 :         Creating array with element typ
+e [System.String] and 1 elements
+DEBUG: ParameterBinding Information: 0 :         Argument type FileInfo is not I
+List, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :         BIND arg [C:\github\PhillyPosh\
+WSG2014_01_Pairs\adil\pairs_output_20140123_203332.csv] to param [Path] SKIPPED
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil\pairs_output_20140123_203332.csv] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         Binding collection parameter Pa
+th: argument type [FileInfo], parameter type [System.String[]], collection type 
+Array, element type [System.String], no coerceElementType
+DEBUG: ParameterBinding Information: 0 :         Creating array with element typ
+e [System.String] and 1 elements
+DEBUG: ParameterBinding Information: 0 :         Argument type FileInfo is not I
+List, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :         BIND arg [C:\github\PhillyPosh\
+WSG2014_01_Pairs\adil\pairs_output_20140123_203332.csv] to param [Path] SKIPPED
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG2
+014_01_Pairs\adil\pairs_output_20140123_203332.csv] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String[]]
+DEBUG: ParameterBinding Information: 0 :             Trying to convert argument 
+value from System.Management.Automation.PSObject to System.String[]
+DEBUG: ParameterBinding Information: 0 :             ENCODING arg into collectio
+n
+DEBUG: ParameterBinding Information: 0 :             Binding collection paramete
+r Path: argument type [PSObject], parameter type [System.String[]], collection t
+ype Array, element type [System.String], coerceElementType
+DEBUG: ParameterBinding Information: 0 :             Creating array with element
+ type [System.String] and 1 elements
+DEBUG: ParameterBinding Information: 0 :             Argument type PSObject is n
+ot IList, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Strin
+g]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argum
+ent value from System.Management.Automation.PSObject to System.String
+DEBUG: ParameterBinding Information: 0 :                 CONVERT arg type to par
+am type using LanguagePrimitives.ConvertTo
+DEBUG: ParameterBinding Information: 0 :                 CONVERT SUCCESSFUL usin
+g LanguagePrimitives.ConvertTo: [C:\github\PhillyPosh\WSG2014_01_Pairs\adil\pair
+s_output_20140123_203332.csv]
+DEBUG: ParameterBinding Information: 0 :             Adding scalar element of ty
+pe String to array position 0
+DEBUG: ParameterBinding Information: 0 :         Executing VALIDATION metadata: 
+[System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.String[]] to p
+aram [Path] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Im
+port-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [ForEach-Objec
+t]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [ForEach-
+Object]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [
+         # Creating a hashtable of users with the value containing all the previ
+ous pairs for that user
+            $Hash[$_.LeftPair] +=,$_.RightPair       
+            $Hash[$_.RightPair] +=,$_.LeftPair 
+        ] to parameter [Process]
+DEBUG: ParameterBinding Information: 0 :         Binding collection parameter Pr
+ocess: argument type [ScriptBlock], parameter type [System.Management.Automation
+.ScriptBlock[]], collection type Array, element type [System.Management.Automati
+on.ScriptBlock], no coerceElementType
+DEBUG: ParameterBinding Information: 0 :         Creating array with element typ
+e [System.Management.Automation.ScriptBlock] and 1 elements
+DEBUG: ParameterBinding Information: 0 :         Argument type ScriptBlock is no
+t IList, treating this as scalar
+DEBUG: ParameterBinding Information: 0 :         Adding scalar element of type S
+criptBlock to array position 0
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Management.Aut
+omation.ScriptBlock[]] to param [Process] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Marissa; Right
+Pair=David}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Marissa; R
+ightPair=David}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Agnes; RightPa
+ir=Tom}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Agnes; Rig
+htPair=Tom}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Matt; RightPai
+r=Pamela}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Matt; Righ
+tPair=Pamela}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Josh; RightPai
+r=Pilar}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Josh; Righ
+tPair=Pilar}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Robin; RightPa
+ir=Robert}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Robin; Rig
+htPair=Robert}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Adam; RightPai
+r=Julie}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Adam; Righ
+tPair=Julie}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Bezen; RightPa
+ir=Greg}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Bezen; Rig
+htPair=Greg}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Avi; RightPair
+=Terry}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Avi; Right
+Pair=Terry}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Mana
+gement.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's orig
+inal values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE IN
+PUT ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Hazem; RightPa
+ir=Amy}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Hazem; Rig
+htPair=Amy}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Fo
+rEach-Object]
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Write-Verbose
+]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Write-Ve
+rbose]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Previous Pairs] to parame
+ter [Message]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Previous Pairs] to pa
+ram [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Wr
+ite-Verbose]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Write-Warning
+]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Write-Wa
+rning]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Odd number of people, ple
+ase select a person to have two pals.] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Odd number of people,
+ please select a person to have two pals.] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Wr
+ite-Warning]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+WARNING: Odd number of people, please select a person to have two pals.
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Read-Host]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Read-Hos
+t]
+DEBUG: ParameterBinding Information: 0 : BIND REMAININGARGUMENTS cmd line args t
+o param: [Prompt]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.ArrayL
+ist] to parameter [Prompt]
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Object]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the
+ same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Ar
+rayList] to param [Prompt] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Re
+ad-Host]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+Please choose a person to have 2 pals
+ Marissa Agnes Matt Josh Robin Adam Bezen Avi Tom Hazem Pilar Terry Amy Greg Pam
+ela Julie David Robert Adil: MAtt
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Read-Host]
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Read-Host]
+DEBUG: ParameterBinding Information: 0 : BIND REMAININGARGUMENTS cmd line args to 
+param: [Prompt]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.ArrayLis
+t] to parameter [Prompt]
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Object]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to param [Prompt] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Read
+-Host]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+Please choose a person to have 2 pals
+ Marissa Agnes Matt Josh Robin Adam Bezen Avi Tom Hazem Pilar Terry Amy Greg Pamel
+a Julie David Robert Adil: Adil
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Get-Pair]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Object[]] to paramet
+er [pool]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.ArrayList
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.ArrayList]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to param [pool] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Adil] to parameter [pickTwo
+]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Adil
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Adil] to param [pickTwo
+] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [True] to parameter [Verbose
+]
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Management.
+Automation.SwitchParameter]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [True] to param [Verbose
+] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Get-Pair]
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Get-
+Pair]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Object[]] to paramet
+er [prime]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.String[]
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String[]]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.String[]] to par
+am [prime] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: pool size: 19
+] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: pool size
+: 19] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: pool size: 19
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Adil
+ from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+Adil from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing Adil from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Get-Random]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Object[
+]]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argumen
+t value from System.Collections.ArrayList to System.Object[]
+DEBUG: ParameterBinding Information: 0 :                 ENCODING arg into collect
+ion
+DEBUG: ParameterBinding Information: 0 :                 Binding collection parame
+ter InputObject: argument type [ArrayList], parameter type [System.Object[]], coll
+ection type Array, element type [System.Object], coerceElementType
+DEBUG: ParameterBinding Information: 0 :                 Arg is IList with 18 elem
+ents
+DEBUG: ParameterBinding Information: 0 :                 Creating array with eleme
+nt type [System.Object] and 18 elements
+DEBUG: ParameterBinding Information: 0 :                 Argument type System.Coll
+ections.ArrayList is IList
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 0
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 1
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 2
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 3
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 4
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 5
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 6
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 7
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 8
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 9
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 10
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 11
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 12
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 13
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 14
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 15
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 16
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 17
+DEBUG: ParameterBinding Information: 0 :             Executing VALIDATION metadata
+: [System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [System.Object[]] to
+ param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Get-Ra
+ndom]
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Get-Random]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Checking if A
+dil can be paired with Bezen] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Checking 
+if Adil can be paired with Bezen] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Checking if Adil can be paired with Bezen
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Adil] to parameter [left]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Adil
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Adil] to param [left] S
+UCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Bezen] to parameter [right]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Bezen
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Bezen] to param [right]
+ SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Pairing resul
+t: Adil | Bezen] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Pairing r
+esult: Adil | Bezen] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Pairing result: Adil | Bezen
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Beze
+n from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+Bezen from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing Bezen from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Get-Random]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Object[
+]]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argumen
+t value from System.Collections.ArrayList to System.Object[]
+DEBUG: ParameterBinding Information: 0 :                 ENCODING arg into collect
+ion
+DEBUG: ParameterBinding Information: 0 :                 Binding collection parame
+ter InputObject: argument type [ArrayList], parameter type [System.Object[]], coll
+ection type Array, element type [System.Object], coerceElementType
+DEBUG: ParameterBinding Information: 0 :                 Arg is IList with 17 elem
+ents
+DEBUG: ParameterBinding Information: 0 :                 Creating array with eleme
+nt type [System.Object] and 17 elements
+DEBUG: ParameterBinding Information: 0 :                 Argument type System.Coll
+ections.ArrayList is IList
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 0
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 1
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 2
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 3
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 4
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 5
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 6
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 7
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 8
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 9
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 10
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 11
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 12
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 13
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 14
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 15
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 16
+DEBUG: ParameterBinding Information: 0 :             Executing VALIDATION metadata
+: [System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [System.Object[]] to
+ param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Get-Ra
+ndom]
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Get-Random]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Checking if A
+dil can be paired with David] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Checking 
+if Adil can be paired with David] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Checking if Adil can be paired with David
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Adil] to parameter [left]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Adil
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Adil] to param [left] S
+UCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [David] to parameter [right]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: David
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [David] to param [right]
+ SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Pairing resul
+t: Adil | David] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Pairing r
+esult: Adil | David] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Pairing result: Adil | David
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Davi
+d from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+David from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing David from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Pool size: 16] to param
+eter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Pool size: 16] to p
+aram [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Pool size: 16
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Left: Marissa
+] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Left: Mar
+issa] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Left: Marissa
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Get-Random]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Object[
+]]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argumen
+t value from System.Collections.ArrayList to System.Object[]
+DEBUG: ParameterBinding Information: 0 :                 ENCODING arg into collect
+ion
+DEBUG: ParameterBinding Information: 0 :                 Binding collection parame
+ter InputObject: argument type [ArrayList], parameter type [System.Object[]], coll
+ection type Array, element type [System.Object], coerceElementType
+DEBUG: ParameterBinding Information: 0 :                 Arg is IList with 15 elem
+ents
+DEBUG: ParameterBinding Information: 0 :                 Creating array with eleme
+nt type [System.Object] and 15 elements
+DEBUG: ParameterBinding Information: 0 :                 Argument type System.Coll
+ections.ArrayList is IList
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 0
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 1
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 2
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 3
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 4
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 5
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 6
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 7
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 8
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 9
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 10
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 11
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 12
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 13
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 14
+DEBUG: ParameterBinding Information: 0 :             Executing VALIDATION metadata
+: [System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [System.Object[]] to
+ param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Get-Ra
+ndom]
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Get-Random]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Right : Adam]
+ to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Right : A
+dam] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Right : Adam
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Checking if M
+arissa can be paired with Adam] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Checking 
+if Marissa can be paired with Adam] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Checking if Marissa can be paired with Adam
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Marissa] to parameter [left
+]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Marissa
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Marissa] to param [left
+] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Adam] to parameter [right]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Adam
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Adam] to param [right] 
+SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Adam
+ from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+Adam from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing Adam from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Pairing resul
+t: Marissa | Adam] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Pairing r
+esult: Marissa | Adam] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Pairing result: Marissa | Adam
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Pool size: 14] to param
+eter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Pool size: 14] to p
+aram [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Pool size: 14
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Left: Agnes] 
+to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Left: Agn
+es] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Left: Agnes
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Get-Random]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Object[
+]]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argumen
+t value from System.Collections.ArrayList to System.Object[]
+DEBUG: ParameterBinding Information: 0 :                 ENCODING arg into collect
+ion
+DEBUG: ParameterBinding Information: 0 :                 Binding collection parame
+ter InputObject: argument type [ArrayList], parameter type [System.Object[]], coll
+ection type Array, element type [System.Object], coerceElementType
+DEBUG: ParameterBinding Information: 0 :                 Arg is IList with 13 elem
+ents
+DEBUG: ParameterBinding Information: 0 :                 Creating array with eleme
+nt type [System.Object] and 13 elements
+DEBUG: ParameterBinding Information: 0 :                 Argument type System.Coll
+ections.ArrayList is IList
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 0
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 1
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 2
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 3
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 4
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 5
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 6
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 7
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 8
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 9
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 10
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 11
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 12
+DEBUG: ParameterBinding Information: 0 :             Executing VALIDATION metadata
+: [System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [System.Object[]] to
+ param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Get-Ra
+ndom]
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Get-Random]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Right : Amy] 
+to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Right : A
+my] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Right : Amy
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Checking if A
+gnes can be paired with Amy] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Checking 
+if Agnes can be paired with Amy] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Checking if Agnes can be paired with Amy
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Agnes] to parameter [left]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Agnes
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Agnes] to param [left] 
+SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Amy] to parameter [right]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Amy
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Amy] to param [right] S
+UCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Amy 
+from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+Amy from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing Amy from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Pairing resul
+t: Agnes | Amy] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Pairing r
+esult: Agnes | Amy] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Pairing result: Agnes | Amy
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Pool size: 12] to param
+eter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Pool size: 12] to p
+aram [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Pool size: 12
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Left: Matt] t
+o parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Left: Mat
+t] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Left: Matt
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Get-Random]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Object[
+]]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argumen
+t value from System.Collections.ArrayList to System.Object[]
+DEBUG: ParameterBinding Information: 0 :                 ENCODING arg into collect
+ion
+DEBUG: ParameterBinding Information: 0 :                 Binding collection parame
+ter InputObject: argument type [ArrayList], parameter type [System.Object[]], coll
+ection type Array, element type [System.Object], coerceElementType
+DEBUG: ParameterBinding Information: 0 :                 Arg is IList with 11 elem
+ents
+DEBUG: ParameterBinding Information: 0 :                 Creating array with eleme
+nt type [System.Object] and 11 elements
+DEBUG: ParameterBinding Information: 0 :                 Argument type System.Coll
+ections.ArrayList is IList
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 0
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 1
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 2
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 3
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 4
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 5
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 6
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 7
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 8
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 9
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 10
+DEBUG: ParameterBinding Information: 0 :             Executing VALIDATION metadata
+: [System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [System.Object[]] to
+ param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Get-Ra
+ndom]
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Get-Random]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Right : Terry
+] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Right : T
+erry] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Right : Terry
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Checking if M
+att can be paired with Terry] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Checking 
+if Matt can be paired with Terry] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Checking if Matt can be paired with Terry
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Matt] to parameter [left]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Matt
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Matt] to param [left] S
+UCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Terry] to parameter [right]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Terry
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Terry] to param [right]
+ SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Terr
+y from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+Terry from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing Terry from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Pairing resul
+t: Matt | Terry] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Pairing r
+esult: Matt | Terry] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Pairing result: Matt | Terry
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Pool size: 10] to param
+eter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Pool size: 10] to p
+aram [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Pool size: 10
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Left: Josh] t
+o parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Left: Jos
+h] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Left: Josh
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Get-Random]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Object[
+]]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argumen
+t value from System.Collections.ArrayList to System.Object[]
+DEBUG: ParameterBinding Information: 0 :                 ENCODING arg into collect
+ion
+DEBUG: ParameterBinding Information: 0 :                 Binding collection parame
+ter InputObject: argument type [ArrayList], parameter type [System.Object[]], coll
+ection type Array, element type [System.Object], coerceElementType
+DEBUG: ParameterBinding Information: 0 :                 Arg is IList with 9 eleme
+nts
+DEBUG: ParameterBinding Information: 0 :                 Creating array with eleme
+nt type [System.Object] and 9 elements
+DEBUG: ParameterBinding Information: 0 :                 Argument type System.Coll
+ections.ArrayList is IList
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 0
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 1
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 2
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 3
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 4
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 5
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 6
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 7
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 8
+DEBUG: ParameterBinding Information: 0 :             Executing VALIDATION metadata
+: [System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [System.Object[]] to
+ param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Get-Ra
+ndom]
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Get-Random]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Right : Rober
+t] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Right : R
+obert] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Right : Robert
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Checking if J
+osh can be paired with Robert] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Checking 
+if Josh can be paired with Robert] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Checking if Josh can be paired with Robert
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Josh] to parameter [left]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Josh
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Josh] to param [left] S
+UCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Robert] to parameter [right
+]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Robert
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Robert] to param [right
+] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Robe
+rt from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+Robert from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing Robert from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Pairing resul
+t: Josh | Robert] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Pairing r
+esult: Josh | Robert] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Pairing result: Josh | Robert
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Pool size: 8] to parame
+ter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Pool size: 8] to pa
+ram [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Pool size: 8
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Left: Robin] 
+to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Left: Rob
+in] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Left: Robin
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Get-Random]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Object[
+]]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argumen
+t value from System.Collections.ArrayList to System.Object[]
+DEBUG: ParameterBinding Information: 0 :                 ENCODING arg into collect
+ion
+DEBUG: ParameterBinding Information: 0 :                 Binding collection parame
+ter InputObject: argument type [ArrayList], parameter type [System.Object[]], coll
+ection type Array, element type [System.Object], coerceElementType
+DEBUG: ParameterBinding Information: 0 :                 Arg is IList with 7 eleme
+nts
+DEBUG: ParameterBinding Information: 0 :                 Creating array with eleme
+nt type [System.Object] and 7 elements
+DEBUG: ParameterBinding Information: 0 :                 Argument type System.Coll
+ections.ArrayList is IList
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 0
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 1
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 2
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 3
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 4
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 5
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 6
+DEBUG: ParameterBinding Information: 0 :             Executing VALIDATION metadata
+: [System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [System.Object[]] to
+ param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Get-Ra
+ndom]
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Get-Random]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Right : Tom] 
+to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Right : T
+om] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Right : Tom
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Checking if R
+obin can be paired with Tom] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Checking 
+if Robin can be paired with Tom] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Checking if Robin can be paired with Tom
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Robin] to parameter [left]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Robin
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Robin] to param [left] 
+SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Tom] to parameter [right]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Tom
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Tom] to param [right] S
+UCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Tom 
+from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+Tom from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing Tom from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Pairing resul
+t: Robin | Tom] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Pairing r
+esult: Robin | Tom] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Pairing result: Robin | Tom
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Pool size: 6] to parame
+ter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Pool size: 6] to pa
+ram [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Pool size: 6
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Left: Avi] to
+ parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Left: Avi
+] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Left: Avi
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Get-Random]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Object[
+]]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argumen
+t value from System.Collections.ArrayList to System.Object[]
+DEBUG: ParameterBinding Information: 0 :                 ENCODING arg into collect
+ion
+DEBUG: ParameterBinding Information: 0 :                 Binding collection parame
+ter InputObject: argument type [ArrayList], parameter type [System.Object[]], coll
+ection type Array, element type [System.Object], coerceElementType
+DEBUG: ParameterBinding Information: 0 :                 Arg is IList with 5 eleme
+nts
+DEBUG: ParameterBinding Information: 0 :                 Creating array with eleme
+nt type [System.Object] and 5 elements
+DEBUG: ParameterBinding Information: 0 :                 Argument type System.Coll
+ections.ArrayList is IList
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 0
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 1
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 2
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 3
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 4
+DEBUG: ParameterBinding Information: 0 :             Executing VALIDATION metadata
+: [System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [System.Object[]] to
+ param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Get-Ra
+ndom]
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Get-Random]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Right : Julie
+] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Right : J
+ulie] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Right : Julie
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Checking if A
+vi can be paired with Julie] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Checking 
+if Avi can be paired with Julie] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Checking if Avi can be paired with Julie
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Avi] to parameter [left]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Avi
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Avi] to param [left] SU
+CCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Julie] to parameter [right]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Julie
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Julie] to param [right]
+ SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Juli
+e from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+Julie from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing Julie from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Pairing resul
+t: Avi | Julie] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Pairing r
+esult: Avi | Julie] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Pairing result: Avi | Julie
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Pool size: 4] to parame
+ter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Pool size: 4] to pa
+ram [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Pool size: 4
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Left: Hazem] 
+to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Left: Haz
+em] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Left: Hazem
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Get-Random]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Object[
+]]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argumen
+t value from System.Collections.ArrayList to System.Object[]
+DEBUG: ParameterBinding Information: 0 :                 ENCODING arg into collect
+ion
+DEBUG: ParameterBinding Information: 0 :                 Binding collection parame
+ter InputObject: argument type [ArrayList], parameter type [System.Object[]], coll
+ection type Array, element type [System.Object], coerceElementType
+DEBUG: ParameterBinding Information: 0 :                 Arg is IList with 3 eleme
+nts
+DEBUG: ParameterBinding Information: 0 :                 Creating array with eleme
+nt type [System.Object] and 3 elements
+DEBUG: ParameterBinding Information: 0 :                 Argument type System.Coll
+ections.ArrayList is IList
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 0
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 1
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 2
+DEBUG: ParameterBinding Information: 0 :             Executing VALIDATION metadata
+: [System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [System.Object[]] to
+ param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Get-Ra
+ndom]
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Get-Random]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Right : Greg]
+ to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Right : G
+reg] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Right : Greg
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Checking if H
+azem can be paired with Greg] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Checking 
+if Hazem can be paired with Greg] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Checking if Hazem can be paired with Greg
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Hazem] to parameter [left]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Hazem
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Hazem] to param [left] 
+SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Greg] to parameter [right]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Greg
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Greg] to param [right] 
+SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Greg
+ from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+Greg from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing Greg from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Pairing resul
+t: Hazem | Greg] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Pairing r
+esult: Hazem | Greg] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Pairing result: Hazem | Greg
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Pool size: 2] to parame
+ter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Pool size: 2] to pa
+ram [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Pool size: 2
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Left: Pilar] 
+to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Left: Pil
+ar] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Left: Pilar
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Get-Random]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Arra
+yList] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :             COERCE arg to [System.Object[
+]]
+DEBUG: ParameterBinding Information: 0 :                 Trying to convert argumen
+t value from System.Collections.ArrayList to System.Object[]
+DEBUG: ParameterBinding Information: 0 :                 ENCODING arg into collect
+ion
+DEBUG: ParameterBinding Information: 0 :                 Binding collection parame
+ter InputObject: argument type [ArrayList], parameter type [System.Object[]], coll
+ection type Array, element type [System.Object], coerceElementType
+DEBUG: ParameterBinding Information: 0 :                 Arg is IList with 1 eleme
+nts
+DEBUG: ParameterBinding Information: 0 :                 Creating array with eleme
+nt type [System.Object] and 1 elements
+DEBUG: ParameterBinding Information: 0 :                 Argument type System.Coll
+ections.ArrayList is IList
+DEBUG: ParameterBinding Information: 0 :                 COERCE collection element
+ from type PSObject to type System.Object
+DEBUG: ParameterBinding Information: 0 :                 COERCE arg to [System.Obj
+ect]
+DEBUG: ParameterBinding Information: 0 :                     Parameter and arg typ
+es the same, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :                 Adding element of type PS
+Object to array position 0
+DEBUG: ParameterBinding Information: 0 :             Executing VALIDATION metadata
+: [System.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [System.Object[]] to
+ param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Get-Ra
+ndom]
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Get-Random]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Right : Pamel
+a] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Right : P
+amela] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Right : Pamela
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Checking if P
+ilar can be paired with Pamela] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Checking 
+if Pilar can be paired with Pamela] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Checking if Pilar can be paired with Pamela
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Pilar] to parameter [left]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Pilar
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Pilar] to param [left] 
+SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [Pamela] to parameter [right
+]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: Pamela
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Pamela] to param [right
+] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND arg [System.Collections.Hashtabl
+e] to parameter [previousPairs]
+DEBUG: ParameterBinding Information: 0 :         Executing DATA GENERATION metadat
+a: [System.Management.Automation.ArgumentTypeConverterAttribute]
+DEBUG: ParameterBinding Information: 0 :             result returned from DATA GEN
+ERATION: System.Collections.Hashtable
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Collections
+.Hashtable]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [System.Collections.Hash
+table] to param [previousPairs] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Removing Pame
+la from the pool of people] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Removing 
+Pamela from the pool of people] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Removing Pamela from the pool of people
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 :     BIND NAMED cmd line args [Write-Verbo
+se]
+DEBUG: ParameterBinding Information: 0 :     BIND POSITIONAL cmd line args [Write-
+Verbose]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [Get-Pair: Pairing resul
+t: Pilar | Pamela] to parameter [Message]
+DEBUG: ParameterBinding Information: 0 :             BIND arg [Get-Pair: Pairing r
+esult: Pilar | Pamela] to param [Message] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 :     MANDATORY PARAMETER CHECK on cmdlet [
+Write-Verbose]
+DEBUG: ParameterBinding Information: 0 :     CALLING BeginProcessing
+VERBOSE: Get-Pair: Pairing result: Pilar | Pamela
+DEBUG: ParameterBinding Information: 0 :     CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Get-Date]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [yyyyMMdd_HHmmss] to paramet
+er [Format]
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.String]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [yyyyMMdd_HHmmss] to par
+am [Format] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Get-Date]
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Get-
+Date]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Export-Csv]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [True] to parameter [NoTypeI
+nformation]
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Management.
+Automation.SwitchParameter]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [True] to param [NoTypeI
+nformation] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Export-Csv
+]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [C:\github\PhillyPosh\WSG201
+4_01_Pairs\adil\pairs_output_20140124_200733.csv] to parameter [Path]
+DEBUG: ParameterBinding Information: 0 :         Executing VALIDATION metadata: [S
+ystem.Management.Automation.ValidateNotNullOrEmptyAttribute]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [C:\github\PhillyPosh\WS
+G2014_01_Pairs\adil\pairs_output_20140124_200733.csv] to param [Path] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Adil; RightPair=
+Bezen}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Adil; RightP
+air=Bezen}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Adil; RightPair=
+David}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Adil; RightP
+air=David}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Marissa; RightPa
+ir=Adam}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Marissa; Rig
+htPair=Adam}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Agnes; RightPair
+=Amy}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Agnes; Right
+Pair=Amy}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Matt; RightPair=
+Terry}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Matt; RightP
+air=Terry}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Josh; RightPair=
+Robert}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Josh; RightP
+air=Robert}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Robin; RightPair
+=Tom}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Robin; Right
+Pair=Tom}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Avi; RightPair=J
+ulie}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Avi; RightPa
+ir=Julie}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Hazem; RightPair
+=Greg}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Hazem; Right
+Pair=Greg}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Pilar; RightPair
+=Pamela}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Pilar; Right
+Pair=Pamela}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Expo
+rt-Csv]
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+DEBUG: ParameterBinding Information: 0 : BIND NAMED cmd line args [Format-Table]
+DEBUG: ParameterBinding Information: 0 :     BIND arg [True] to parameter [AutoSiz
+e]
+DEBUG: ParameterBinding Information: 0 :         COERCE arg to [System.Management.
+Automation.SwitchParameter]
+DEBUG: ParameterBinding Information: 0 :             Parameter and arg types the s
+ame, no coercion is needed.
+DEBUG: ParameterBinding Information: 0 :         BIND arg [True] to param [AutoSiz
+e] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : BIND POSITIONAL cmd line args [Format-Tab
+le]
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : CALLING BeginProcessing
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Adil; RightPair=
+Bezen}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Adil; RightP
+air=Bezen}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Adil; RightPair=
+David}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Adil; RightP
+air=David}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Marissa; RightPa
+ir=Adam}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Marissa; Rig
+htPair=Adam}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Agnes; RightPair
+=Amy}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Agnes; Right
+Pair=Amy}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Matt; RightPair=
+Terry}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Matt; RightP
+air=Terry}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Josh; RightPair=
+Robert}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Josh; RightP
+air=Robert}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Robin; RightPair
+=Tom}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Robin; Right
+Pair=Tom}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Avi; RightPair=J
+ulie}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Avi; RightPa
+ir=Julie}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Hazem; RightPair
+=Greg}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Hazem; Right
+Pair=Greg}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : BIND PIPELINE object to parameters: [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 :     PIPELINE object TYPE = [System.Manage
+ment.Automation.PSCustomObject]
+DEBUG: ParameterBinding Information: 0 :     RESTORING pipeline parameter's origin
+al values
+DEBUG: ParameterBinding Information: 0 :     Parameter [InputObject] PIPELINE INPU
+T ValueFromPipeline NO COERCION
+DEBUG: ParameterBinding Information: 0 :     BIND arg [@{LeftPair=Pilar; RightPair
+=Pamela}] to parameter [InputObject]
+DEBUG: ParameterBinding Information: 0 :         BIND arg [@{LeftPair=Pilar; Right
+Pair=Pamela}] to param [InputObject] SUCCESSFUL
+DEBUG: ParameterBinding Information: 0 : MANDATORY PARAMETER CHECK on cmdlet [Form
+at-Table]
+DEBUG: ParameterBinding Information: 0 : CALLING EndProcessing
+
+LeftPair RightPair
+-------- ---------
+Adil     Bezen    
+Adil     David    
+Marissa  Adam     
+Agnes    Amy      
+Matt     Terry    
+Josh     Robert   
+Robin    Tom      
+Avi      Julie    
+Hazem    Greg     
+Pilar    Pamela   
+
+
+
+PS C:\github\PhillyPosh\WSG2014_01_Pairs\adil> 
