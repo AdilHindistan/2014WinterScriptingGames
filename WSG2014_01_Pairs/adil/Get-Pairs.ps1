@@ -11,18 +11,20 @@
 
 
 .PARAMETER UserList
+    specifies the path to the text file that contains the list of name
 
 .PARAMETER Primary
 
 .PARAMETER PreviousPairDirectory
 
-
 .EXAMPLE
     Get-Pairs.ps1 -UserList C:\scratch\names.txt
+    This example will generate pairs from names in the list names.txt
 
 .EXAMPLE
    
     .\Get-Pairs.ps1 -UserList C:\scratch\names.txt -primary c:\scratch\primarylist.txt
+    This example will generate pairs from names in the list names.txt, while taking Matt as a primary.
 #>
 
 #requires -version 3.0
