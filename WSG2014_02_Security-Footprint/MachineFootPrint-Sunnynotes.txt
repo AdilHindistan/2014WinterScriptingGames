@@ -1,0 +1,26 @@
+Folder size and number of files
+·         Files: Path, Size, Last Modified, optionally file hash for specified folders
+·         Shares on the computer
+·         Installed software
+·         Running processes
+·         Running services
+·         Environmental variables
+·         Registry entries (especially those associated with “Auto run” functionality, such as HKLM:\software\Microsoft\Windows\CurrentVersion\Run) and the software settings in HKLM:\software
+
+Md5Hash
+Get-Hash
+http://blogs.technet.com/b/heyscriptingguy/archive/2012/05/30/learn-the-easy-way-to-use-powershell-to-get-file-hashes.aspx
+
+Installed Software
+http://www.sans.org/reading-room/whitepapers/forensics/live-response-powershell-3
+http://grandstreamdreams.blogspot.com/2013/09/powershell-for-forsec-incident-response.html
+
+Modified Files
+http://blogs.technet.com/b/heyscriptingguy/archive/2012/05/31/use-powershell-to-compute-md5-hashes-and-find-changed-files.aspx
+
+IR
+http://theblogofbryan.com/2013/07/30/windows-forensic-analysis-using-powershell/
+
+·         Environmental variables
+Get-Item ENV:
+Get-
