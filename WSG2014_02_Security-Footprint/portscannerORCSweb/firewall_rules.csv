@@ -1,0 +1,5 @@
+Dest,Service,Action
+192.168.1.0/24,HTTP,Allow
+192.168.100.50,"HTTPS,tcp/8080",Allow
+10.0.1.1-10,"SMTP,tcp/4900-4910,udp/53",Allow
+10.254.254.0/28,"RDP",Deny
