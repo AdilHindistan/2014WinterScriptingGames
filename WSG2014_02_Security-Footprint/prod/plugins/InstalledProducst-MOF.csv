@@ -1,0 +1,58 @@
+"DisplayName","DisplayVersion","InstallDate","Publisher","EstimatedSize","UninstallString","WindowsInstaller"
+"CutePDF Writer 3.0"," 3.0",,"CutePDF.com",,"C:\Program Files (x86)\Acro Software\CutePDF Writer\Setup64.exe /uninstall",
+"Pismo File Mount Audit Package",,,,,"""C:\Program Files\Pismo File Mount Audit Package\pfmuninstall.exe""",
+"Process Hacker 2.31 (r5355)","2.31.0.5355","20131008","wj32","3567","""C:\Program Files\Process Hacker 2\unins000.exe""",
+"Intel(R) Network Connections Drivers","16.5",,"Intel","916","Prounstl.exe",
+"SmartDraw PDF Filter",,,,,"C:\Program Files (x86)\SmartDraw PDF Filter\unInstpw64.exe /uninstall",
+"Snare version 4.0.2 (Open Source)","4.0.2","20131022","InterSect Alliance Pty Ltd","1677","""C:\Program Files\Snare\unins000.exe""",
+"System Center 2012 - Operations Manager","7.0.8560.0",,"Microsoft Corporation",,"""C:\Program Files\System Center 2012\Operations Manager\Setup\Setup.exe"" /ARPRun",
+"WinRAR 5.00 (64-bit)","5.00.0",,"win.rar GmbH",,"C:\Program Files\WinRAR\uninstall.exe",
+"ZeroMQ 3.2.4 (x64)","3.2.4",,"Miru",,"C:\Program Files\ZeroMQ 3.2.4\Uninstall.exe",
+"Build Tools Language Resources - amd64","12.0.21005","20131025","Microsoft Corporation","9848","MsiExec.exe /I{05198C22-FFCE-374A-B190-9F18CC99DAEA}","1"
+"Microsoft System CLR Types for SQL Server 2012 (x64)","11.1.3366.16","20131025","Microsoft Corporation","1572","MsiExec.exe /I{05FF8209-C4F1-4C77-BC28-791653156D20}","1"
+"Intel? Trusted Connect Service Client","1.23.605.1","20120816","Intel Corporation","10913","MsiExec.exe /X{09536BA1-E498-4CC3-B834-D884A67D7E34}","1"
+"1E Agent","6.1.0","20130507","1E","25819","MsiExec.exe /X{0D4BCDCD-6225-4BA5-91A3-54AFCECC281E}","1"
+"API Monitor v2 (Alpha)","2.13.0","20131230","rohitab.com","28992","MsiExec.exe /I{13BE68B1-7498-48AB-9D22-AD3AB6532531}","1"
+"Microsoft Visual C++ 2010  x64 Redistributable - 10.0.40219","10.0.40219","20120816","Microsoft Corporation","14199","MsiExec.exe /X{1D8E6291-B0D5-35EC-8441-6616F567A0F7}","1"
+"Java(TM) 7 Update 5 (64-bit)","7.0.50","20120709","Oracle","97311","MsiExec.exe /X{26A24AE4-039D-4CA4-87B4-2F86417005FF}","1"
+"64 Bit HP CIO Components Installer","13.2.1","20130924","Hewlett-Packard","841","MsiExec.exe /I{3138F992-045B-4F55-825C-53B231E647CA}","1"
+"Microsoft Assessment and Planning Toolkit","9.0.135.0","20140113","Microsoft Corporation","60232","MsiExec.exe /X{38EF6B1C-FE51-4F60-8FF9-27048BB2058E}","1"
+"Microsoft SQL Server 2012 Management Objects  (x64)","11.1.3000.0","20131025","Microsoft Corporation","17272","MsiExec.exe /I{43A5C316-9521-49C3-B9B6-FCE5E1005DF0}","1"
+"Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.4148","9.0.30729.4148","20130116","Microsoft Corporation","780","MsiExec.exe /X{4B6C7001-C7D6-3710-913E-5BC23FCE91E6}","1"
+"Windows Software Development Kit DirectX x64 Remote","8.100.25984","20131025","Microsoft Corporation","1532","MsiExec.exe /I{5247E16E-BCF8-95AB-1653-B3F8FBF8B3F1}","1"
+"Microsoft SQL Server 2012 Transact-SQL ScriptDom ","11.1.3000.0","20131025","Microsoft Corporation","4644","MsiExec.exe /I{54C5041B-0E91-4E92-8417-AAA12493C790}","1"
+"Microsoft SQL Server 2012 Command Line Utilities ","11.1.3000.0","20131025","Microsoft Corporation","876","MsiExec.exe /I{58FED865-4F13-408D-A5BF-996019C4B936}","1"
+"Symantec Endpoint Protection","11.0.7000.975","20120709","Symantec Corporation","359901","MsiExec.exe /I{5C75DA6D-F5E3-4D4B-A381-B52B8CA5B1CF}","1"
+"PAL","2.4","20131028","PAL","5119","MsiExec.exe /I{5F978166-E9E9-45A2-AE49-EA7A4FFCF648}","1"
+"Microsoft Visual Studio 2013 Express Prerequisites x64 - ENU","12.0.21005","20131025","Microsoft Corporation","7432","MsiExec.exe /I{60391499-BB97-3FC7-9F17-2BF560DCE231}","1"
+"Microsoft Team Foundation Server 2013 Object Model (x64)","12.0.21005","20131025","Microsoft Corporation","8660","MsiExec.exe /I{65C91666-C3E8-3A42-BDA8-87932DD34F89}","1"
+"Microsoft LifeCam","3.22.270.0","20131112","Microsoft Corporation","61524","MsiExec.exe /X{6965A8D2-465D-4F98-9FAA-0E9E2348F329}","1"
+"DameWare Mini Remote Control Service","9.0.1.0","20131017","SolarWinds","8234","MsiExec.exe /X{6B394DC9-A95F-48B1-98A5-9EE1A774C634}","1"
+"Microsoft SQL Server 2012 Express LocalDB ","11.1.3000.0","20131025","Microsoft Corporation","162376","MsiExec.exe /I{6C026A91-640F-4A23-8B68-05D589CC6F18}","1"
+"Microsoft Exchange Web Services Managed API 2.0","15.0.516.14","20131120","Microsoft Corporation","4245","MsiExec.exe /I{6EE9E2DF-2CD7-4952-A649-95DEA8697BD8}","1"
+"Microsoft SQL Server Compact 4.0 SP1 x64 ENU","4.0.8876.1","20131025","Microsoft Corporation","19782","MsiExec.exe /X{78909610-D229-459C-A936-25D92283D3FD}","1"
+"Microsoft .NET Framework 4.5.1","4.5.50938","20131025","Microsoft Corporation","1494318","MsiExec.exe /X{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}","1"
+"Microsoft Lync 2010","4.0.7577.4103","20130116","Microsoft Corporation","81116","MsiExec.exe /X{81BE0B17-563B-45D4-B198-5721E6C665CD}","1"
+"Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.17","9.0.30729","20131017","Microsoft Corporation","252","MsiExec.exe /X{8220EEFE-38CD-377E-8595-13398D740ACE}","1"
+"Microsoft Silverlight","5.1.20913.0","20131111","Microsoft Corporation","204288","MsiExec.exe /X{89F4137D-6C26-4A84-BDB8-2E5A4BB71E00}","1"
+"Microsoft Network Monitor 3.4","3.4.2350.0","20140121","Microsoft Corporation","11498","MsiExec.exe /I{8C5B5A11-CBF8-451B-B201-77FAB0D0B77D}","1"
+"Microsoft Office Office 64-bit Components 2010","14.0.6029.1000","20120816","Microsoft Corporation","48470","MsiExec.exe /X{90140000-002A-0000-1000-0000000FF1CE}","1"
+"Microsoft Office Shared 64-bit MUI (English) 2010","14.0.6029.1000","20120816","Microsoft Corporation","11554","MsiExec.exe /X{90140000-002A-0409-1000-0000000FF1CE}","1"
+"Microsoft Office Shared 64-bit Setup Metadata MUI (English) 2010","14.0.6029.1000","20120816","Microsoft Corporation","646","MsiExec.exe /X{90140000-0116-0409-1000-0000000FF1CE}","1"
+"Microsoft Visual C++ 2013 x64 Additional Runtime - 12.0.21005","12.0.21005","20131025","Microsoft Corporation","11784","MsiExec.exe /X{929FBD26-9020-399B-9A7A-751D61F0B942}","1"
+"Microsoft .NET Framework 4.5.1","4.5.50938",,"Microsoft Corporation","39732","C:\Windows\Microsoft.NET\Framework64\v4.0.30319\SetupCache\v4.5.50938\\Setup.exe /repair /x86 /x64",
+"System Center Operations Manager 2012 Console","7.0.8560.0","20131022","Microsoft Corporation","98774","MsiExec.exe /I{95241780-B772-4A42-A1F0-8FA951FAF619}","1"
+"Microsoft Network Monitor: NetworkMonitor Parsers 3.4","3.4.2350.0","20140121","Microsoft Corporation","20851","MsiExec.exe /I{963E5FEB-1367-46B9-851D-A957F1A3747F}","1"
+"Windows Software Development Kit for Windows Store Apps DirectX x64 Remote","8.100.25984","20131025","Microsoft Corporation","12096","MsiExec.exe /I{96F4525A-470D-F15C-796E-58D9988C3E5F}","1"
+"Microsoft Corporation","9.1.0.0","20131112","Microsoft Corporation","1694","MsiExec.exe /I{9C5A08BF-BB99-4998-81BD-F6CC32483B34}","1"
+"Microsoft SQL Server 2012 Data-Tier App Framework  (x64)","11.1.2902.0","20131025","Microsoft Corporation","10372","MsiExec.exe /I{A6BA243E-85A3-4635-A269-32949C98AC7F}","1"
+"Microsoft Visual C++ 2013 x64 Minimum Runtime - 12.0.21005","12.0.21005","20131025","Microsoft Corporation","2532","MsiExec.exe /X{A749D8E6-B613-3BE3-8F5F-045C84EBA29B}","1"
+"Quest ActiveRoles Management Shell for Active Directory (x64)","1.5.1.2421","20131007","Quest Software, Inc.","20795","MsiExec.exe /X{AFF7153F-C4AA-4C48-AEE9-8611D276CE86}","1"
+"Windows Software Development Kit DirectX x64 Remote","8.59.29989","20131025","Microsoft Corporation","2168","MsiExec.exe /I{B74B199A-EDD4-B657-E055-327D454402D2}","1"
+"DameWare Mini Remote Control 9.0","9.0.1.247","20131017","SolarWinds","75310","MsiExec.exe /I{B805B869-3A82-47EF-9B58-AAEE7E913F94}","1"
+"Microsoft Team Foundation Server 2013 Object Model Language Pack (x64) - ENU","12.0.21005","20131025","Microsoft Corporation","740","MsiExec.exe /I{C41498FE-0BF8-3B22-9785-231CE53C728E}","1"
+"Microsoft Visual C++ 2013 x64 Debug Runtime - 12.0.21005","12.0.21005","20131025","Microsoft Corporation","27128","MsiExec.exe /X{C596D608-3E74-3232-8CA5-DF1DCB9F10DE}","1"
+"Microsoft SQL Server 2012 Native Client ","11.1.3000.0","20131025","Microsoft Corporation","7364","MsiExec.exe /I{D411E9C9-CE62-4DBF-9D92-4CB22B750ED5}","1"
+"Microsoft Exchange Web Services Managed API 1.2","14.3.32.0","20131120","Microsoft Corporation","3257","MsiExec.exe /I{D445C9E2-5C7E-48B9-9307-6CED162C9030}","1"
+"Data Protection Agent","3.4.5619.10914","20120709","Safend Ltd.","137898",,"1"
+"Build Tools - amd64","12.0.21005","20131025","Microsoft Corporation","11272","MsiExec.exe /I{F74753A3-C93C-34F5-A199-993CAF602B7D}","1"
