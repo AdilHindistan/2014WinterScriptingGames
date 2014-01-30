@@ -1,18 +1,6 @@
 ﻿$HTMLTitle = "List All Installed Products"
 $TblHeader =  "List All Installed Products on $env:ComputerName "
 
-#Get Reg Method. Works Remotely.
-$computer = 'PHL107766'
-$hivepath = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
-$objReg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $computer) 
-$objRegKey = $objReg.openSubKey($hivepath,$true) 
-
-foreach ($entry in $objRegKey.GetSubKeyNames()) {
-    Get-itemproperty "HKLM:\$hivepath\$entry" | Select DisplayName,Version,InstallDate,Publisher,EstimatedSize,UninstallString,WindowsInstaller | Export-csv -notypeInformation $pwd\InstalledProducst-Remote.csv -Append
-    }
-
-Import-Csv $pwd\InstalledProducst-Remote.csv
-
 #Get MOF File Method
 $mof = @'
 #PRAGMA AUTORECOVER
@@ -45,10 +33,20 @@ class SG_InstalledProducts32 {
 '@
 $mof | Out-file -encoding ascii $env:TMP\SG_Mof.txt
 mofcomp.exe $env:TMP\SG_Mof.txt
-#Remove-Item $env:TMP\SG_Mof.txt
-Get-WmiObject -Namespace root\default -class SG_InstalledProducts | Select DisplayName,DisplayVersion,InstallDate,Publisher,EstimatedSize,UninstallString,WindowsInstaller | Export-csv -notypeInformation $pwd\InstalledProducst-MOF.csv -Append
+
+Get-WmiObject -Namespace root\default -class SG_InstalledProducts | Select DisplayName,DisplayVersion,InstallDate,Publisher,EstimatedSize,UninstallString,WindowsInstaller | Export-csv -notypeInformation $pwd\$pwd\InstalledProducts-MOF.csv -Append
+Get-WmiObject -Namespace root\default -class SG_InstalledProducts32 | Select DisplayName,DisplayVersion,InstallDate,Publisher,EstimatedSize,UninstallString,WindowsInstaller | Export-csv -notypeInformation $pwd\$pwd\InstalledProducts-MOF.csv -Append
+
+#remove the WMI Class from the repository
 Remove-WmiObject -Namespace root\default -class SG_InstalledProducts 
+Remove-WmiObject -Namespace root\default -class SG_InstalledProducts32
+
+#Remove the MOF File used to generate the WMI Class.
+Remove-Item $env:TMP\SG_Mof.txt
 
 #WRITE
-Import-Csv $pwd\InstalledProducst-MOF.csv
+Import-Csv $pwd\InstalledProducts-MOF.csv
 
+#Get Hotfix
+get-hotfix | Select Source,Description,HotFixID,InstalledBy,InstalledOn | Export-csv -notypeInformation $pwd\InstalledHotFixes.csv -Append
+Import-Csv $pwd\InstalledHotFixes.csv
