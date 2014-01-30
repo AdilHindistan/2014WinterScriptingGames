@@ -37,6 +37,7 @@ function check-script
     return $true}
     "notvalid" {Write-Warning "cannot validate certificate. Skipping execution"
     return $false
+    default {Write-Warning "cannot validate certificate. Skipping execution"}
     }
     }
     }
