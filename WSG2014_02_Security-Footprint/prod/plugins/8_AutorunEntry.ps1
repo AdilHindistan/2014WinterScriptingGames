@@ -1,12 +1,13 @@
 ﻿$HTMLTitle = "List Autorun Entries"
 $TblHeader =  "List Autorun Entries on $env:ComputerName "
 
-#Get
+#Get - METHOD1
 $hive = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
 Get-itemproperty $hive | Export-csv -notypeInformation $pwd\RegAutoRuns.csv 
+Import-CSV $pwd\RegAutoRuns.csv 
 
-#Get Remote Registry Value
-$computer = ''
+#Get Remote Registry Value METHOD2
+$computer = $env:ComputerName
 $hivepath = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
 $objReg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $computer) 
 $objRegKey = $objReg.openSubKey($hivepath,$true) 
@@ -19,5 +20,4 @@ foreach ($entry in $objRegKey.GetValueNames()) {
     }
 
 #WRITE
-Import-Csv $pwd\EnvVariables.csv 
 Import-Csv $pwd\RegAutoRuns-Remote.csv

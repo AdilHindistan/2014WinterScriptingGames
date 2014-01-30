@@ -3,8 +3,8 @@ $TblHeader =  "File IOC on $env:ComputerName "
 
 $outputObj= "" | Select File, Size, LastModified, Hash
 
-gci -Path C:\ -Recurse -File | foreach {
-    $prop = gci $_.FullName -ErrorAction SilentlyContinue 
+Get-ChildItem -Path C:\ -Recurse -File | foreach {
+    $prop = Get-ChildItem $_.FullName -ErrorAction SilentlyContinue 
     
     $outputObj.File= $_.FullName
     $outputObj.size = [Math]::Round($prop.Length /1kb,2)
@@ -15,4 +15,4 @@ gci -Path C:\ -Recurse -File | foreach {
 }
 
 #WRITE
-#import-csv $pwd\FileInspction.csv | sort Size -Descending
+import-csv $pwd\FileInspction.csv 
