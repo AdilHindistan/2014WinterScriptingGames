@@ -23,7 +23,7 @@ Function Get-ApplicablePluginList {
 ## Execute each plugin
 Foreach ( $p in (Get-ApplicablePluginList -config $ConfigFile)) {
     if (Test-Path "$PSScriptRoot\plugins\$p.ps1") {
-            Write-Verbose "Executing $p"
+            "Executing $p"
             & "$PSScriptRoot\plugins\$p.ps1"
     }
 }
