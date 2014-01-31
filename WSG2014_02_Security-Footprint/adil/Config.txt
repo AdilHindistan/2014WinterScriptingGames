@@ -1,0 +1,16 @@
+## Security Plugin Configuration file
+## <configuration_item>:$true|$false
+## A value of $true means script should process the relevant plugin code to get data on the item
+ 
+GetEventLog:$true
+GetFolder:$true
+GetFile:$true
+GetShare:$true
+GetInstalledSoftware:$true
+GetProcess:$true
+GetService:$true
+GetEnvVariable:$true
+GetRegistry:$true
+
+
+

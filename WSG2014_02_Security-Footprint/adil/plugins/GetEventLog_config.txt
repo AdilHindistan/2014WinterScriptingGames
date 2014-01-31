@@ -1,0 +1,5 @@
+﻿## Configuration File for Event Log collection
+## LogName:EventId,EventId,EventId
+Application:1001,4097,64004,2
+Security:4688,4697,4698,4624,4625,4657
+System:7034,7035,7036,7040
