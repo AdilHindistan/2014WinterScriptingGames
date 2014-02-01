@@ -1,3 +1,4 @@
+
 [CMDLETBINDING()]
 Param(
         [Parameter(Mandatory)]
@@ -19,9 +20,8 @@ $log = {
 
 $outputObj= "" | Select File, SizeinKB, LastModified, Hash
 try {
-        if ($OutputFile) {
-            &$log "Exporting all files, file size, filehash to $outputfile"
-            
+
+    
             Get-ChildItem -Path C:\ -Recurse -File | foreach {
             $prop = Get-ChildItem $_.FullName -ErrorAction SilentlyContinue 
     
@@ -29,20 +29,15 @@ try {
             $outputObj.SizeinKB = [Math]::Round($prop.Length /1kb,2)
             $outputObj.LastModified= $_.LastWriteTime
             $outputObj.Hash = Get-Hash $_.FullName
-            Write-Output $outputobj | Export-Csv -NoTypeInformation $pwd\FileInspction.csv -Append
+        
             }
 
-        } else {
-            Get-ChildItem -Path C:\ -Recurse -File | foreach {
-            $prop = Get-ChildItem $_.FullName -ErrorAction SilentlyContinue 
-    
-            $outputObj.File= $_.FullName
-            $outputObj.SizeinKB = [Math]::Round($prop.Length /1kb,2)
-            $outputObj.LastModified= $_.LastWriteTime
-            $outputObj.Hash = Get-Hash $_.FullName
-            Write-Output $outputobj 
-            }
-        
+            if ($OutputFile) {
+                &$log "Exporting all files, file size, filehash to $outputfile"
+            
+                Write-Output $outputobj | Export-Csv -NoTypeInformation $outputFile -Force            
+            } else {            
+                Write-Output $outputobj        
             }
     }
 catch {
