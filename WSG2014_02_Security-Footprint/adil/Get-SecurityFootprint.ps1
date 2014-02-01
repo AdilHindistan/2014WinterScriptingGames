@@ -1,5 +1,5 @@
 #Requires -version 3
-##Requires -RunAsAdministrator  ##Choose run with highest privilidges in Scheduled Task. This will be necessary for some plugins
+#Requires -RunAsAdministrator  ##Choose run with highest privilidges in Scheduled Task. This will be necessary for some plugins
 <#
 .Synopsis
    Creates a security footprint of the computer
@@ -36,7 +36,7 @@
 
    PS c:> Get-SecurityFootprint -CentralLogPath \\logserver\logshare -ConfigFile "$pwd\onlyevents.ini"
 
-   Same as above but uses the onlyevents.ini file in the current directory to determine which pluginsneed to be run. In this case only 'getevents' is set to true
+   Same as above but uses the onlyevents.ini file in the current directory to determine which plugins need to be run. In this case only 'geteventlog' plugin is set to be run
 .NOTES
    Be sure to run script in elevated shell. Run with -verbose to see progress.Plugins output to \output folder where script resides script      
 #>

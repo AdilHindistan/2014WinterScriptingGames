@@ -6,8 +6,12 @@
        Creates pairs of names from a supplied list
 
     .DESCRIPTION
-       The Get-Pairs.ps1 script when run when run without any parameters will search the current directory for a list of names and pair them to form secret pals. 
+       The Get-Pairs.ps1 script when run when run without aany parameters will search the current directory for a list of names and pair them to form secret pals. 
        If the list contains an odd number it prompts the user to select the name that will have more than one secret pal.
+
+       When run with the -primary parameter, the names in an alternate list are considered primary and the script will first math these with the rest of the names before pairing any remaining people. 
+       It also checks to to ensure that people are not repeatedly matched during subsequent runs of the script 
+
 
     .PARAMETER UserList
         specifies the path to the text file that contains the list of names
