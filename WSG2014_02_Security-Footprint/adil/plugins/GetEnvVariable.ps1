@@ -27,7 +27,7 @@
     This command produces no output on the screen. Instead it will log the progress in a file named 'envprogress.log' in the script directory, and export results to c:\temp\GetEnvVariable.csv    
 
 .NOTES
-   Be sure to run script in elevated shell. Run with -verbose to see progress.Plugins output to \output folder where script resides script      
+   Run with -verbose to see progress.
 #>
 [CMDLETBINDING()]
 Param(  
