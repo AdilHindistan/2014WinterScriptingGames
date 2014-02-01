@@ -8,7 +8,7 @@
    Creates a zipped file that contains security footprint of the computer and ships it to a central log folder.
 
 .PARAMETER ConfigFile
-    Full path to the config file. It is used to determine which plugins will be run. New plugins can be added, and turned on or off. A default config.txt includes the current plugins.
+    Full path to the config file. It is used to determine which plugins will be run. New plugins can be added, and turned on or off. A default config.ini is included in the script directory for the current plugins.
 
 .PARAMETER CentralLogPath
     The network share where the collected log files will be written. If not specified, collected files
@@ -43,10 +43,12 @@
 
 [CMDLETBINDING()]
 Param (
+    [Parameter(HelpMessage='Provide the config file to determine which plugins will be run')]
     #Name of configuration file for plugins    
     [ValidateScript({test-path $_})]    
     [string]$ConfigFile,
 
+    [Parameter(HelpMessage='Enter full path of the network share where logs will be shipped to')]
     #Central Log location
     [ValidateScript({Test-Path $_})]
     [string]$CentralLogPath
