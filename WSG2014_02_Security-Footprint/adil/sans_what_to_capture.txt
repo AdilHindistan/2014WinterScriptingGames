@@ -1,0 +1,61 @@
+## Reference: https://www.sans.org/reading-room/whitepapers/logging/detecting-security-incidents-windows-workstation-event-logs-34262
+
+## Event Logs to collect
+Windows 7 regular expressions SOURCE EventID
+Number
+".*APPCRASH.*" Application 1001! (+4097)
+".*he protected system file.*" Application 64004
+".*EMET_DLL Module logged the following event:.*" Application 2!
+.*your virus/spyware.* Application Varies
+".*A new process has been created\..*" Security 4688!
+".*A service was installed in the system\..*" Security 4697!
+".*A scheduled task was created\..*" Security 4698!
+".*Logon Type:[\W]*(3|10).*" Security 4624, 4625!
+".*\\Software\\Microsoft\\Windows\\CurrentVersion\\Run.*" Security 4657!
+".*service terminated unexpectedly\..*" System 7034!
+".*service was successfully sent a.*" System 7035!
+".*service entered the.*" System 7036!
+".*service was changed from.*" System 7040
+# Alert on new scheduled task EventID 602
+
+One method of detection would be to search for unusual host to host
+network based logins. Windows logs these events at Type 3 Network logins or if using
+Remote Desktop Protocol RDP then Type 10 Network logins (EventID 528|529|4624|4625).
+
+
+## Processes
+Alert on < windows_process_name > unless the path is correct.
+Alert on svchost.exe unless its path is C:\Windows\System32\svchost.exe
+Alert on explorer.exe unless its path is C:\Windows\explorer.exe
+Check especially for processes that has ProcessName starting with lower case (from cmd line)
+
+“Most system processes have well defined parents; 
+cmd.exe should not be the parent of lsass.exe. 
+Most user processes are started by Explorer.exe. It’s suspicious when they’re not. 
+Some system processes should never start programs; lsass.exe should not start cmd.exe”
+
+new process created events is to sort them to show which processes are least frequently used. The least frequently used processes are by definition unusual.
+
+Another possible indicator of an intrusion as referenced by the SANS Intrusion Discovery Cheat Sheet (SANS, n.d.) is a Windows File Protection (WFP) warning event (EventID 64004).
+
+## REGISTRY
+Intrusion Discovery Cheat Sheet (SANS, n.d.) for Windows are commonly used by
+malware (and legitimate programs) to create persistence.
+• HKLM\Software\Microsoft\Windows\CurrentVersion\Run
+• HKLM\Software\Microsoft\Windows\CurrentVersion\Runonce
+• HKLM\Software\Microsoft\Windows\CurrentVersion\RunonceEx
+• HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+• HKCU\Software\Microsoft\Windows\CurrentVersion\Runonce
+• HKCU\Software\Microsoft\Windows\CurrentVersion\RunonceEx
+
+## Shares
+Net view \\127.0.0.1
+
+## Sessions
+net session
+
+## Files
+.scr   | Whitelist scrnsave.scr|ss3dfo.scr|ssbezier.scr|ssflwbox.scr|ssmarque.scr|ssmypics.scr|ssmyst.scr|sspipes.scr|ssstars.scr|sstext3d.scr
+.exe
+.com
+.

@@ -1,0 +1,225 @@
+20140131_215900 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_215900 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_215900 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_215900 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_215900 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_215901 GetEventLog.ps1: Exporting results to  file
+20140131_215901 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_215901 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_215901 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_215901 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_215901 Get-SecurityFootprint.ps1: A parameter cannot be found that matches parameter name 'logFile'.
+20140131_215901 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_215901 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_215901 Get-SecurityFootprint.ps1: A parameter cannot be found that matches parameter name 'logFile'.
+20140131_215901 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_215900 as 
+20140131_220953 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_220953 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_220953 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_220953 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_220953 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_220953 GetEventLog.ps1: Exporting results to  file
+20140131_220953 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_220953 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_220953 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_220953 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_220953 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_220953\GetInstalledSoftware.csv
+20140131_220954 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_220954 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_220954 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_220953\GetEnvVariable.csv
+20140131_220954 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_220953 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_220953.zip
+20140131_221401 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_221401 to store plugin output
+20140131_221401 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_221401 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_221401 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_221402 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_221402 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_221402 GetEventLog.ps1: Exporting results to  file
+20140131_221402 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_221402 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_221402 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_221402 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_221402 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_221401\GetInstalledSoftware.csv
+20140131_221402 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_221402 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_221402 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_221401\GetEnvVariable.csv
+20140131_221402 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_221401 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_221401.zip
+20140131_221407 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_221407 to store plugin output
+20140131_221407 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_221407 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_221407 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_221407 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_221407 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_221408 GetEventLog.ps1: Exporting results to  file
+20140131_221408 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_221408 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_221408 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_221408 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_221408 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_221407\GetInstalledSoftware.csv
+20140131_221408 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_221408 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_221408 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_221407\GetEnvVariable.csv
+20140131_221408 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_221407 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_221407.zip
+20140131_222541 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222541 to store plugin output
+20140131_222541 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_222541 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_222541 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_222541 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_222541 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_222541 GetEventLog.ps1: Exporting results to  file
+20140131_222542 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_222542 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_222542 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_222542 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_222542 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222541\GetInstalledSoftware.csv
+20140131_222542 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_222542 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_222542 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222541\GetEnvVariable.csv
+20140131_222542 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222541 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_222541.zip
+20140131_222542 Get-SecurityFootprint.ps1: Copying zipped file to 
+20140131_222542 Get-SecurityFootprint.ps1: Deleting local copy of the zip file
+20140131_222542 Get-SecurityFootprint.ps1: Deleting output folder
+20140131_222735 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222735 to store plugin output
+20140131_222735 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_222735 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_222735 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_222735 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_222736 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_222736 GetEventLog.ps1: Exporting results to  file
+20140131_222736 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_222736 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_222736 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_222736 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_222736 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222735\GetInstalledSoftware.csv
+20140131_222736 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_222736 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_222736 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222735\GetEnvVariable.csv
+20140131_222737 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222735 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_222735.zip
+20140131_222737 Get-SecurityFootprint.ps1: Copying zipped file to 
+20140131_222737 Get-SecurityFootprint.ps1: Deleting local copy of the zip file
+20140131_222737 Get-SecurityFootprint.ps1: Deleting output folder
+20140131_222744 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222744 to store plugin output
+20140131_222744 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_222744 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_222744 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_222744 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_222745 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_222745 GetEventLog.ps1: Exporting results to  file
+20140131_222745 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_222745 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_222745 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_222745 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_222745 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222744\GetInstalledSoftware.csv
+20140131_222746 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_222746 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_222746 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222744\GetEnvVariable.csv
+20140131_222746 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222744 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_222744.zip
+20140131_222746 Get-SecurityFootprint.ps1: Copying zipped file to 
+20140131_222746 Get-SecurityFootprint.ps1: Deleting local copy of the zip file
+20140131_222746 Get-SecurityFootprint.ps1: Deleting output folder
+20140131_222956 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222956 to store plugin output
+20140131_222956 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_222956 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_222956 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_222956 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_222956 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_222956 GetEventLog.ps1: Exporting results to  file
+20140131_222957 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_222957 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_222957 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_222957 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_222957 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222956\GetInstalledSoftware.csv
+20140131_222957 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_222957 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_222957 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222956\GetEnvVariable.csv
+20140131_222957 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_222956 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_222956.zip
+20140131_222957 Get-SecurityFootprint.ps1: Copying zipped file to 
+20140131_222957 Get-SecurityFootprint.ps1: Deleting local copy of the zip file
+20140131_222957 Get-SecurityFootprint.ps1: Deleting output folder
+20140131_224023 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_224023 to store plugin output
+20140131_224023 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_224023 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_224023 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_224023 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_224023 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_224023 GetEventLog.ps1: Exporting results to  file
+20140131_224024 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_224024 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_224024 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_224024 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_224024 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_224023\GetInstalledSoftware.csv
+20140131_224024 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_224024 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_224024 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_224023\GetEnvVariable.csv
+20140131_224024 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_224023 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_224023.zip
+20140131_224024 Get-SecurityFootprint.ps1: Copying zipped file to 
+20140131_224024 Get-SecurityFootprint.ps1: Deleting local copy of the zip file
+20140131_224024 Get-SecurityFootprint.ps1: Deleting output folder
+20140131_224650 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_224650 to store plugin output
+20140131_224650 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_224650 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_224650 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_224650 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_224651 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_224651 GetEventLog.ps1: Exporting results to  file
+20140131_224651 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_224651 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_224651 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_224651 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_224651 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_224650\GetInstalledSoftware.csv
+20140131_224651 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_224651 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_224651 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_224650\GetEnvVariable.csv
+20140131_224651 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_224650 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_224650.zip
+20140131_224652 Get-SecurityFootprint.ps1: Copying zipped file to 
+20140131_224652 Get-SecurityFootprint.ps1: Deleting local copy of the zip file
+20140131_224652 Get-SecurityFootprint.ps1: Deleting output folder
+20140131_225954 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_225954 to store plugin output
+20140131_225954 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_225954 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_225954 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_225954 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_225954 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_225955 GetEventLog.ps1: Exporting results to  file
+20140131_225955 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_225954 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_225954.zip
+20140131_225955 Get-SecurityFootprint.ps1: Copying zipped file to 
+20140131_225955 Get-SecurityFootprint.ps1: Deleting local copy of the zip file
+20140131_225955 Get-SecurityFootprint.ps1: Deleting output folder
+20140131_230850 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_230850 to store plugin output
+20140131_230850 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_230850 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_230850 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_230851 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_230851 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_230851 GetEventLog.ps1: Exporting results to  file
+20140131_230851 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_230851 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_230851 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_230851 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_230851 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_230850\GetInstalledSoftware.csv
+20140131_230852 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_230852 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_230852 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_230850\GetEnvVariable.csv
+20140131_230852 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_230850 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_230850.zip
+20140131_230852 Get-SecurityFootprint.ps1: Copying zipped file to 
+20140131_230852 Get-SecurityFootprint.ps1: Deleting local copy of the zip file
+20140131_230852 Get-SecurityFootprint.ps1: Deleting output folder
+20140131_231109 Get-SecurityFootprint.ps1: Get-SecurityFootprint.ps1: Creating C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_231109 to store plugin output
+20140131_231109 Get-SecurityFootprint.ps1: Executing GetEventLog
+20140131_231109 GetEventLog.ps1: Getting configuration file to determine which events will be captured
+20140131_231109 GetEventLog.ps1: Processing Security with event IDs 4688 4697 4698 4624 4625 4657
+20140131_231110 GetEventLog.ps1: Processing System with event IDs 7034 7035 7036 7040
+20140131_231110 GetEventLog.ps1: Processing Application with event IDs 1001 4097 64004 2
+20140131_231110 GetEventLog.ps1: Exporting results to  file
+20140131_231110 Get-SecurityFootprint.ps1: Executing GetFolder
+20140131_231110 Get-SecurityFootprint.ps1: Executing GetFile
+20140131_231111 Get-SecurityFootprint.ps1: Executing GetShare
+20140131_231111 Get-SecurityFootprint.ps1: Executing GetInstalledSoftware
+20140131_231111 GetInstalledSoftware.ps1: Exporting results to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_231109\GetInstalledSoftware.csv
+20140131_231111 Get-SecurityFootprint.ps1: Executing GetProcess
+20140131_231111 Get-SecurityFootprint.ps1: Executing GetEnvVariable
+20140131_231111 GetEnvVariable.ps1: Exporting Environment variables to C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_231109\GetEnvVariable.csv
+20140131_231111 Get-SecurityFootprint.ps1: Zipping up output from C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\output\20140131_231109 as C:\Users\Adil\Documents\GitHub\PhillyPosh\WSG2014_02_Security-Footprint\adil\AHSYS_20140131_231109.zip
+20140131_231111 Get-SecurityFootprint.ps1: Copying zipped file to network share 
+20140131_231111 Get-SecurityFootprint.ps1: Deleting local copy of the zip file
+20140131_231111 Get-SecurityFootprint.ps1: Deleting output folder
