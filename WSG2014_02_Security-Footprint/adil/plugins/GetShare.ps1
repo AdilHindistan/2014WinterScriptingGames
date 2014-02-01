@@ -52,7 +52,7 @@ if ($OutputPath) {
 $log = {
     param([string]$msg)
 
-    IF ($LogFile) {        
+    if ($LogFile) {        
         Add-Content -path $LogFile  -value "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
     }
     Write-Verbose "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
@@ -60,7 +60,7 @@ $log = {
 
 try {
         if ($OutputFile) {
-            &$log "Exporting File shares to $outputfile"
+            &$log "Exporting Computer share information to $outputfile"
             Get-WmiObject -class Win32_Share| Export-Csv -Path $outputFile  -NoTypeInformation -Force
         } else {
             Get-WmiObject -class Win32_Share
