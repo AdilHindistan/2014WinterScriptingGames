@@ -125,7 +125,7 @@ try {
         &$log "Zipping up output from $outputPath as $ZipPath"
         [IO.Compression.ZipFile]::CreateFromDirectory($OutputPath, $ZipPath, "Optimal", $true )
         if ($CentralLogPath) {
-            try {
+            
                 &$log "Copying zipped file to network share $CentralLogPath"
                 Copy-Item -Path (join-path $PSScriptRoot $ZipPath) -Destination $CentralLogPath
                 
@@ -133,11 +133,7 @@ try {
                 Remove-Item -Path $ZipPath -Force
 
                 &$log "Deleting output folder"
-                Remove-Item -Path $OutputPath -recurse -Force
-            }
-            catch {
-                &$log $_
-            }
+                Remove-Item -Path $OutputPath -recurse -Force            
         }
     }
 catch {
