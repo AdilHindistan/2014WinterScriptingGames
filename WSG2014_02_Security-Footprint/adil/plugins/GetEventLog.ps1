@@ -9,9 +9,21 @@ Param(
 
 $ScriptName = $MyInvocation.MyCommand.Name
 
-$outputFile = Join-Path $outputpath ($ScriptName -replace '.ps1','.csv')
 $configFile = Join-Path $PSScriptRoot ($ScriptName -replace '.ps1','_config.ini')
  
+
+if ($OutputPath) { 
+    $outputFile = Join-Path $outputpath ($ScriptName -replace '.ps1','.csv') 
+}
+
+$log = {
+    param([string]$msg)
+
+    if ($LogFile) {        
+        Add-Content -path $LogFile  -value "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
+    }
+    Write-Verbose "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
+}
 
 
  Function Get-Config {
@@ -30,12 +42,6 @@ $configFile = Join-Path $PSScriptRoot ($ScriptName -replace '.ps1','_config.ini'
    $result
 }
 
-$log = {
-    param([string]$msg)
-        
-    Add-Content -path $script:LogFile  -value "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
-    Write-Verbose "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
-}
 
 
 &$log "Getting configuration file to determine which events will be captured"
