@@ -61,9 +61,9 @@ $log = {
 try {
         if ($OutputFile) {
             &$log "Exporting Computer share information to $outputfile"
-            Get-WmiObject -class Win32_Share| Export-Csv -Path $outputFile  -NoTypeInformation -Force
+            Get-WmiObject -class Win32_Share| Select Name,Path,Description | Export-Csv -Path $outputFile  -NoTypeInformation -Force
         } else {
-            Get-WmiObject -class Win32_Share
+            Get-WmiObject -class Win32_Share| Select Name,Path,Description |
         }
     }
 catch {

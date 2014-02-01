@@ -127,7 +127,7 @@ try {
         if ($CentralLogPath) {
             
                 &$log "Copying zipped file to network share $CentralLogPath"
-                Copy-Item -Path (join-path $PSScriptRoot $ZipPath) -Destination $CentralLogPath
+                Copy-Item -Path $ZipPath -Destination $CentralLogPath
                 
                 &$log "Deleting local copy of the zip file"
                 Remove-Item -Path $ZipPath -Force
