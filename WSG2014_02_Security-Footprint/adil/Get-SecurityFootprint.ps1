@@ -1,5 +1,5 @@
 #Requires -version 3
-##Requires -RunAsAdministrator  ##Choose run with highest privilidges in Scheduled Task. This will be necessary for some plugins
+#Requires -RunAsAdministrator  ##Choose run with highest privilidges in Scheduled Task. This will be necessary for some plugins
 <#
 .Synopsis
    Creates a security footprint of the computer
@@ -8,7 +8,7 @@
    Creates a zipped file that contains security footprint of the computer and ships it to a central log folder.
 
 .PARAMETER ConfigFile
-    Full path to the config file. It is used to determine which plugins will be run. New plugins can be added, and turned on or off. A default config.txt includes the current plugins.
+    Full path to the config file. It is used to determine which plugins will be run. New plugins can be added, and turned on or off. A default config.ini is included in the script directory for the current plugins.
 
 .PARAMETER CentralLogPath
     The network share where the collected log files will be written. If not specified, collected files
@@ -36,17 +36,19 @@
 
    PS c:> Get-SecurityFootprint -CentralLogPath \\logserver\logshare -ConfigFile "$pwd\onlyevents.ini"
 
-   Same as above but uses the onlyevents.ini file in the current directory to determine which pluginsneed to be run. In this case only 'getevents' is set to true
+   Same as above but uses the onlyevents.ini file in the current directory to determine which plugins need to be run. In this case only 'geteventlog' plugin is set to be run
 .NOTES
    Be sure to run script in elevated shell. Run with -verbose to see progress.Plugins output to \output folder where script resides script      
 #>
 
 [CMDLETBINDING()]
 Param (
+    [Parameter(HelpMessage='Provide the config file to determine which plugins will be run')]
     #Name of configuration file for plugins    
     [ValidateScript({test-path $_})]    
     [string]$ConfigFile,
 
+    [Parameter(HelpMessage='Enter full path of the network share where logs will be shipped to')]
     #Central Log location
     [ValidateScript({Test-Path $_})]
     [string]$CentralLogPath
@@ -123,19 +125,15 @@ try {
         &$log "Zipping up output from $outputPath as $ZipPath"
         [IO.Compression.ZipFile]::CreateFromDirectory($OutputPath, $ZipPath, "Optimal", $true )
         if ($CentralLogPath) {
-            try {
+            
                 &$log "Copying zipped file to network share $CentralLogPath"
-                Copy-Item -Path (join-path $PSScriptRoot $ZipPath) -Destination $CentralLogPath
+                Copy-Item -Path $ZipPath -Destination $CentralLogPath
                 
                 &$log "Deleting local copy of the zip file"
                 Remove-Item -Path $ZipPath -Force
 
                 &$log "Deleting output folder"
-                Remove-Item -Path $OutputPath -recurse -Force
-            }
-            catch {
-                &$log $_
-            }
+                Remove-Item -Path $OutputPath -recurse -Force            
         }
     }
 catch {
