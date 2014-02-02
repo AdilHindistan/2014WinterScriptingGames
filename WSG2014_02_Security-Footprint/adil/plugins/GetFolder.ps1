@@ -17,28 +17,22 @@ $log = {
     Write-Verbose "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
 }
 
-$outputObj = "" | Select Directory, Size, Count
 try {
+        $outputObj = "" | Select Directory, Size, Count
+        Get-ChildItem -Path C:\ -Directory | foreach {
+            $prop = Get-ChildItem $_.FullName -Recurse -ErrorAction SilentlyContinue | Measure-Object -property length -sum -ErrorAction SilentlyContinue
+            $outputObj.Directory = $_.FullName
+            $outputObj.size = [Math]::Round($prop.Sum /1mb,2)
+            $outputObj.Count= $prop.Count
+            }
         if ($OutputFile) {
             &$log "Exporting Folder Sizes to $outputfile"
-            Get-ChildItem -Path C:\ -Directory | foreach {
-            $prop = Get-ChildItem $_.FullName -Recurse -ErrorAction SilentlyContinue | Measure-Object -property length -sum -ErrorAction SilentlyContinue
-    
-            $outputObj.Directory = $_.FullName
-            $outputObj.size = [Math]::Round($prop.Sum /1mb,2)
-            $outputObj.Count= $prop.Count
-            Write-Output $outputobj | Export-Csv -NoTypeInformation $pwd\FolderSize.csv -Append
+            Write-Output $outputobj | Export-Csv -Path $outputFile  -NoTypeInformation -Append
             } 
-        } else {
-            Get-ChildItem -Path C:\ -Directory | foreach {
-            $prop = Get-ChildItem $_.FullName -Recurse -ErrorAction SilentlyContinue | Measure-Object -property length -sum -ErrorAction SilentlyContinue
-    
-            $outputObj.Directory = $_.FullName
-            $outputObj.size = [Math]::Round($prop.Sum /1mb,2)
-            $outputObj.Count= $prop.Count
+        else {
             Write-Output $outputobj 
             }
-        }
+        
     }
 catch {
         &$log $_

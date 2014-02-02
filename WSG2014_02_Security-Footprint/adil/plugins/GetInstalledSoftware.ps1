@@ -17,8 +17,6 @@ $log = {
     Write-Verbose "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
 }
 
-
-function Get-InstalledSoftware {
 $mof = @'
 #PRAGMA AUTORECOVER
  
@@ -49,25 +47,35 @@ class SG_InstalledProducts32 {
 };
 '@
 
-    $mof | Out-file -encoding ascii $env:TMP\SG_Mof.txt
-    mofcomp.exe $env:TMP\SG_Mof.txt
+$mof | Out-file -encoding ascii $env:TMP\SG_Mof.txt
+mofcomp.exe $env:TMP\SG_Mof.txt
+[System.Collections.ArrayList]$outputObj = @()
 
-    Get-WmiObject -Namespace root\default -class SG_InstalledProducts | Select DisplayName,DisplayVersion,InstallDate,Publisher,EstimatedSize,UninstallString,WindowsInstaller | Export-csv -notypeInformation $pwd\$pwd\InstalledProducts-MOF.csv -Append
-    Get-WmiObject -Namespace root\default -class SG_InstalledProducts32 | Select DisplayName,DisplayVersion,InstallDate,Publisher,EstimatedSize,UninstallString,WindowsInstaller | Export-csv -notypeInformation $pwd\$pwd\InstalledProducts-MOF.csv -Append
+try {
+    $outputObj += Get-WmiObject -Namespace root\default -class SG_InstalledProducts | Select DisplayName,DisplayVersion,InstallDate,Publisher,EstimatedSize,UninstallString,WindowsInstaller 
+    $outputObj += Get-WmiObject -Namespace root\default -class SG_InstalledProducts32 | Select DisplayName,DisplayVersion,InstallDate,Publisher,EstimatedSize,UninstallString,WindowsInstaller
+        
 
-    #remove the WMI Class from the repository
-    Remove-WmiObject -Namespace root\default -class SG_InstalledProducts 
-    Remove-WmiObject -Namespace root\default -class SG_InstalledProducts32
-
-    #Remove the MOF File used to generate the WMI Class.
-    Remove-Item $env:TMP\SG_Mof.txt
-
-    #WRITE
-    $InstalledSoftware = Import-Csv $pwd\InstalledProducts-MOF.csv
-    return $InstalledSoftware 
+    if ($OutputFile) {
+        &$log "Exporting Computer share information to $outputfile"
+        Write-Output $outputObj | Export-Csv -Path $outputFile  -NoTypeInformation -Force
+        
+        #remove the WMI Class from the repository
+        Remove-WmiObject -Namespace root\default -class SG_InstalledProducts 
+        Remove-WmiObject -Namespace root\default -class SG_InstalledProducts32
+        #Remove the MOF File used to generate the WMI Class.
+        Remove-Item $env:TMP\SG_Mof.txt
+        }
+    else {
+        Write-Output $outputObj 
+        
+        #remove the WMI Class from the repository
+        Remove-WmiObject -Namespace root\default -class SG_InstalledProducts 
+        Remove-WmiObject -Namespace root\default -class SG_InstalledProducts32
+        #Remove the MOF File used to generate the WMI Class.
+        Remove-Item $env:TMP\SG_Mof.txt
+        }
 }
-
-
-## Main script 
-&$log "Exporting results to $outputfile"
-Get-InstalledSoftware |export-csv -NoTypeInformation -Path $outputFile -Force
+catch {
+        &$log $_
+    }
