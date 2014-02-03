@@ -8,12 +8,17 @@ Param(
      )
 
 $ScriptName = $MyInvocation.MyCommand.Name
-$outputFile = Join-Path $outputpath ($ScriptName -replace '.ps1','.csv')
+
+if ($OutputPath) { 
+    $outputFile = Join-Path $outputpath ($ScriptName -replace '.ps1','.csv') 
+}
 
 $log = {
     param([string]$msg)
-        
-    Add-Content -path $script:LogFile  -value "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
+
+    if ($LogFile) {        
+        Add-Content -path $LogFile  -value "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
+    }
     Write-Verbose "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
 }
 

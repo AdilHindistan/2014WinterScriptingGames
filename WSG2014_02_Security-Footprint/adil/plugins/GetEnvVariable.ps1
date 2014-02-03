@@ -50,7 +50,7 @@ if ($OutputPath) {
 $log = {
     param([string]$msg)
 
-    IF ($LogFile) {        
+    if ($LogFile) {        
         Add-Content -path $LogFile  -value "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
     }
     Write-Verbose "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"

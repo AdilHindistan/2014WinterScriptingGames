@@ -14,7 +14,7 @@
     The network share where the collected log files will be written. If not specified, collected files
 
 .EXAMPLE
-   PS C:>Get-SecurityFootprint -CentralLogPath \\logserver\logshare
+   PS C:>Get-SecurityFootprint -CentralLogPath \\logserver\logshare -Verbose
    
    This will create and ship a file named {ComputerName}_yyyymmdd_hhmmss.zip
 

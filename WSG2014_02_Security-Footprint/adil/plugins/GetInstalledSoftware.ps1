@@ -8,12 +8,17 @@ Param(
      )
 
 $ScriptName = $MyInvocation.MyCommand.Name
-$outputFile = Join-Path $outputpath ($ScriptName -replace '.ps1','.csv')
+
+if ($OutputPath) { 
+    $outputFile = Join-Path $outputpath ($ScriptName -replace '.ps1','.csv') 
+}
 
 $log = {
     param([string]$msg)
-        
-    Add-Content -path $script:LogFile  -value "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
+
+    if ($LogFile) {        
+        Add-Content -path $LogFile  -value "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
+    }
     Write-Verbose "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${ScriptName}: $msg"
 }
 
@@ -76,6 +81,19 @@ try {
         Remove-Item $env:TMP\SG_Mof.txt
         }
 }
+<<<<<<< HEAD
 catch {
         &$log $_
     }
+=======
+
+
+## Main script 
+
+        if ($OutputFile) {
+            &$log "Exporting running Services to $outputfile"
+            Get-InstalledSoftware |export-csv -NoTypeInformation -Path $outputFile -Force
+        } else {
+            Get-InstalledSoftware
+        }
+>>>>>>> 1da03d1d881841e8fe3a55163d40acc4bbfb00a0
