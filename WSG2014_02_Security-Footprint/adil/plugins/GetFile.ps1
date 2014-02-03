@@ -20,8 +20,6 @@ $log = {
 
 $outputObj= "" | Select File, SizeinKB, LastModified, Hash
 try {
-
-    
             Get-ChildItem -Path C:\ -Recurse -File | foreach {
             $prop = Get-ChildItem $_.FullName -ErrorAction SilentlyContinue 
     

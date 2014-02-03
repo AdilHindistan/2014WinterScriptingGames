@@ -1,0 +1,4 @@
+This file was created after 00:00 UTC on 2/2
+However, I can still upload it - as I did not loose my prevision session.
+Point being: if you have an existing session before 00:00 UTC, you can use that to upload file after that.
+After the expiration time, you cannot create new sessions.
