@@ -4,6 +4,7 @@
         "department name: " + $department.name
             foreach ($folder in $department.Folders.Folder) {
             "folder name: " + $folder.name
+            "folder path: " + $folder.path
             }
 
         }

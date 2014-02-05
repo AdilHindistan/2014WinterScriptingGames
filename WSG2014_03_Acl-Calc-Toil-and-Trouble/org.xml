@@ -13,6 +13,7 @@
 			        </Permission>
 		        </Permissions>
     	    <Name>Folder1</Name>
+            <path>\\server1\share1</path>
       	    <Parameters>/adminfile %InstallShare%\$BUILDTYPE$\Pkg\OfficeProfessional64Bit_Microsoft_2010_LCL\@artio\desktop.msp</Parameters>
             </Folder>
             <Folder>
@@ -22,6 +23,7 @@
 			        </Permission>
 		        </Permissions>
     	    <Name>Folder2</Name>
+            <path>\\server1\share1\subfolder1</path>
       	    <Parameters>/adminfile %InstallShare%\$BUILDTYPE$\Pkg\OfficeProfessional64Bit_Microsoft_2010_LCL\@artio\desktop.msp</Parameters>
             </Folder>
         </Folders>
@@ -38,6 +40,7 @@
 		        </Permissions>
     	    <Name>FolderDep2</Name>
       	    <Parameters>/adminfile %InstallShare%\$BUILDTYPE$\Pkg\OfficeProfessional64Bit_Microsoft_2010_LCL\@artio\desktop.msp</Parameters>
+            <path>\\server1\share2\subfolder1</path>
             </Folder>
         </Folders>
     </Department>
