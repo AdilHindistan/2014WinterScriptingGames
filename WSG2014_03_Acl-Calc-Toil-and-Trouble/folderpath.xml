@@ -1,0 +1,553 @@
+  <Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04">
+  <Obj RefId="0">
+    <TN RefId="0">
+      <T>System.IO.DirectoryInfo</T>
+      <T>System.IO.FileSystemInfo</T>
+      <T>System.MarshalByRefObject</T>
+      <T>System.Object</T>
+    </TN>
+    <ToString>abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</ToString>
+    <Props>
+      <S N="Name">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+      <Obj N="Parent" RefId="1">
+        <TNRef RefId="0" />
+        <ToString>abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</ToString>
+        <Props>
+          <S N="Name">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <S N="Parent">TEMP</S>
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2014-02-03T00:52:19.1634866-05:00</DT>
+          <DT N="CreationTimeUtc">2014-02-03T05:52:19.1634866Z</DT>
+          <DT N="LastAccessTime">2014-02-03T00:52:35.9804485-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-02-03T05:52:35.9804485Z</DT>
+          <DT N="LastWriteTime">2014-02-03T00:52:35.9804485-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-02-03T05:52:35.9804485Z</DT>
+          <S N="Attributes">Directory</S>
+        </Props>
+        <MS>
+          <S N="BaseName">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <S N="Mode">d----</S>
+        </MS>
+      </Obj>
+      <B N="Exists">true</B>
+      <Obj N="Root" RefId="2">
+        <TNRef RefId="0" />
+        <ToString>C:\</ToString>
+        <Props>
+          <S N="Name">C:\</S>
+          <Nil N="Parent" />
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2009-07-13T22:38:56.5268176-04:00</DT>
+          <DT N="CreationTimeUtc">2009-07-14T02:38:56.5268176Z</DT>
+          <DT N="LastAccessTime">2014-01-26T10:33:34.8755274-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-01-26T15:33:34.8755274Z</DT>
+          <DT N="LastWriteTime">2014-01-26T10:33:34.8755274-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-01-26T15:33:34.8755274Z</DT>
+          <S N="Attributes">Hidden, System, Directory, NotContentIndexed</S>
+        </Props>
+        <MS>
+          <S N="BaseName">C:\</S>
+          <S N="Mode">d--hs</S>
+        </MS>
+      </Obj>
+      <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+      <S N="Extension"></S>
+      <DT N="CreationTime">2014-02-03T00:52:35.9804485-05:00</DT>
+      <DT N="CreationTimeUtc">2014-02-03T05:52:35.9804485Z</DT>
+      <DT N="LastAccessTime">2014-02-03T00:54:28.07686-05:00</DT>
+      <DT N="LastAccessTimeUtc">2014-02-03T05:54:28.07686Z</DT>
+      <DT N="LastWriteTime">2014-02-03T00:54:28.07686-05:00</DT>
+      <DT N="LastWriteTimeUtc">2014-02-03T05:54:28.07686Z</DT>
+      <Obj N="Attributes" RefId="3">
+        <TN RefId="1">
+          <T>System.IO.FileAttributes</T>
+          <T>System.Enum</T>
+          <T>System.ValueType</T>
+          <T>System.Object</T>
+        </TN>
+        <ToString>Directory</ToString>
+        <I32>16</I32>
+      </Obj>
+    </Props>
+    <MS>
+      <S N="PSPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+      <S N="PSParentPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+      <S N="PSChildName">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+      <Obj N="PSDrive" RefId="4">
+        <TN RefId="2">
+          <T>System.Management.Automation.PSDriveInfo</T>
+          <T>System.Object</T>
+        </TN>
+        <ToString>C</ToString>
+        <Props>
+          <S N="CurrentLocation">TEMP</S>
+          <S N="Name">C</S>
+          <Obj N="Provider" RefId="5">
+            <TN RefId="3">
+              <T>System.Management.Automation.ProviderInfo</T>
+              <T>System.Object</T>
+            </TN>
+            <ToString>Microsoft.PowerShell.Core\FileSystem</ToString>
+            <Props>
+              <S N="ImplementingType">Microsoft.PowerShell.Commands.FileSystemProvider</S>
+              <S N="HelpFile">System.Management.Automation.dll-Help.xml</S>
+              <S N="Name">FileSystem</S>
+              <S N="PSSnapIn">Microsoft.PowerShell.Core</S>
+              <S N="ModuleName">Microsoft.PowerShell.Core</S>
+              <Nil N="Module" />
+              <S N="Description"></S>
+              <S N="Capabilities">Filter, ShouldProcess, Credentials</S>
+              <S N="Home">C:\Users\Administrator</S>
+              <Obj N="Drives" RefId="6">
+                <TN RefId="4">
+                  <T>System.Collections.ObjectModel.Collection`1[[System.Management.Automation.PSDriveInfo, System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]</T>
+                  <T>System.Object</T>
+                </TN>
+                <LST>
+                  <Ref RefId="4" />
+                  <S>D</S>
+                  <S>F</S>
+                  <S>E</S>
+                </LST>
+              </Obj>
+            </Props>
+          </Obj>
+          <S N="Root">C:\</S>
+          <S N="Description"></S>
+          <Obj N="Credential" RefId="7">
+            <TN RefId="5">
+              <T>System.Management.Automation.PSCredential</T>
+              <T>System.Object</T>
+            </TN>
+            <ToString>System.Management.Automation.PSCredential</ToString>
+            <Props>
+              <Nil N="UserName" />
+              <Nil N="Password" />
+            </Props>
+          </Obj>
+          <Nil N="DisplayRoot" />
+        </Props>
+        <MS>
+          <U64 N="Used">149131960320</U64>
+          <U64 N="Free">16433131520</U64>
+        </MS>
+      </Obj>
+      <Ref N="PSProvider" RefId="5" />
+      <B N="PSIsContainer">true</B>
+      <S N="BaseName">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+      <S N="Mode">d----</S>
+    </MS>
+  </Obj>
+  <Obj RefId="8">
+    <TNRef RefId="0" />
+    <ToString>124552jkifjkdgf</ToString>
+    <Props>
+      <S N="Name">124552jkifjkdgf</S>
+      <Obj N="Parent" RefId="9">
+        <TNRef RefId="0" />
+        <ToString>abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</ToString>
+        <Props>
+          <S N="Name">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <S N="Parent">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2014-02-03T00:52:35.9804485-05:00</DT>
+          <DT N="CreationTimeUtc">2014-02-03T05:52:35.9804485Z</DT>
+          <DT N="LastAccessTime">2014-02-03T00:54:28.07686-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-02-03T05:54:28.07686Z</DT>
+          <DT N="LastWriteTime">2014-02-03T00:54:28.07686-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-02-03T05:54:28.07686Z</DT>
+          <S N="Attributes">Directory</S>
+        </Props>
+        <MS>
+          <S N="BaseName">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <S N="Mode">d----</S>
+        </MS>
+      </Obj>
+      <B N="Exists">true</B>
+      <Obj N="Root" RefId="10">
+        <TNRef RefId="0" />
+        <ToString>C:\</ToString>
+        <Props>
+          <S N="Name">C:\</S>
+          <Nil N="Parent" />
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2009-07-13T22:38:56.5268176-04:00</DT>
+          <DT N="CreationTimeUtc">2009-07-14T02:38:56.5268176Z</DT>
+          <DT N="LastAccessTime">2014-01-26T10:33:34.8755274-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-01-26T15:33:34.8755274Z</DT>
+          <DT N="LastWriteTime">2014-01-26T10:33:34.8755274-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-01-26T15:33:34.8755274Z</DT>
+          <S N="Attributes">Hidden, System, Directory, NotContentIndexed</S>
+        </Props>
+        <MS>
+          <S N="BaseName">C:\</S>
+          <S N="Mode">d--hs</S>
+        </MS>
+      </Obj>
+      <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf</S>
+      <S N="Extension"></S>
+      <DT N="CreationTime">2014-02-03T00:54:28.07686-05:00</DT>
+      <DT N="CreationTimeUtc">2014-02-03T05:54:28.07686Z</DT>
+      <DT N="LastAccessTime">2014-02-03T00:54:38.0214288-05:00</DT>
+      <DT N="LastAccessTimeUtc">2014-02-03T05:54:38.0214288Z</DT>
+      <DT N="LastWriteTime">2014-02-03T00:54:38.0214288-05:00</DT>
+      <DT N="LastWriteTimeUtc">2014-02-03T05:54:38.0214288Z</DT>
+      <Obj N="Attributes" RefId="11">
+        <TNRef RefId="1" />
+        <ToString>Directory</ToString>
+        <I32>16</I32>
+      </Obj>
+    </Props>
+    <MS>
+      <S N="PSPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf</S>
+      <S N="PSParentPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+      <S N="PSChildName">124552jkifjkdgf</S>
+      <Ref N="PSDrive" RefId="4" />
+      <Ref N="PSProvider" RefId="5" />
+      <B N="PSIsContainer">true</B>
+      <S N="BaseName">124552jkifjkdgf</S>
+      <S N="Mode">d----</S>
+    </MS>
+  </Obj>
+  <Obj RefId="12">
+    <TNRef RefId="0" />
+    <ToString>New folder</ToString>
+    <Props>
+      <S N="Name">New folder</S>
+      <Obj N="Parent" RefId="13">
+        <TNRef RefId="0" />
+        <ToString>abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</ToString>
+        <Props>
+          <S N="Name">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <S N="Parent">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2014-02-03T00:52:35.9804485-05:00</DT>
+          <DT N="CreationTimeUtc">2014-02-03T05:52:35.9804485Z</DT>
+          <DT N="LastAccessTime">2014-02-03T00:54:28.07686-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-02-03T05:54:28.07686Z</DT>
+          <DT N="LastWriteTime">2014-02-03T00:54:28.07686-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-02-03T05:54:28.07686Z</DT>
+          <S N="Attributes">Directory</S>
+        </Props>
+        <MS>
+          <S N="BaseName">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <S N="Mode">d----</S>
+        </MS>
+      </Obj>
+      <B N="Exists">true</B>
+      <Obj N="Root" RefId="14">
+        <TNRef RefId="0" />
+        <ToString>C:\</ToString>
+        <Props>
+          <S N="Name">C:\</S>
+          <Nil N="Parent" />
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2009-07-13T22:38:56.5268176-04:00</DT>
+          <DT N="CreationTimeUtc">2009-07-14T02:38:56.5268176Z</DT>
+          <DT N="LastAccessTime">2014-01-26T10:33:34.8755274-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-01-26T15:33:34.8755274Z</DT>
+          <DT N="LastWriteTime">2014-01-26T10:33:34.8755274-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-01-26T15:33:34.8755274Z</DT>
+          <S N="Attributes">Hidden, System, Directory, NotContentIndexed</S>
+        </Props>
+        <MS>
+          <S N="BaseName">C:\</S>
+          <S N="Mode">d--hs</S>
+        </MS>
+      </Obj>
+      <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\New folder</S>
+      <S N="Extension"></S>
+      <DT N="CreationTime">2014-02-03T00:54:12.8429887-05:00</DT>
+      <DT N="CreationTimeUtc">2014-02-03T05:54:12.8429887Z</DT>
+      <DT N="LastAccessTime">2014-02-03T00:54:12.8429887-05:00</DT>
+      <DT N="LastAccessTimeUtc">2014-02-03T05:54:12.8429887Z</DT>
+      <DT N="LastWriteTime">2014-02-03T00:54:12.8429887-05:00</DT>
+      <DT N="LastWriteTimeUtc">2014-02-03T05:54:12.8429887Z</DT>
+      <Obj N="Attributes" RefId="15">
+        <TNRef RefId="1" />
+        <ToString>Directory</ToString>
+        <I32>16</I32>
+      </Obj>
+    </Props>
+    <MS>
+      <S N="PSPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\New folder</S>
+      <S N="PSParentPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+      <S N="PSChildName">New folder</S>
+      <Ref N="PSDrive" RefId="4" />
+      <Ref N="PSProvider" RefId="5" />
+      <B N="PSIsContainer">true</B>
+      <S N="BaseName">New folder</S>
+      <S N="Mode">d----</S>
+    </MS>
+  </Obj>
+  <Obj RefId="16">
+    <TNRef RefId="0" />
+    <ToString>drfiehqoiubjkfdbvfdbvdkff</ToString>
+    <Props>
+      <S N="Name">drfiehqoiubjkfdbvfdbvdkff</S>
+      <Obj N="Parent" RefId="17">
+        <TNRef RefId="0" />
+        <ToString>124552jkifjkdgf</ToString>
+        <Props>
+          <S N="Name">124552jkifjkdgf</S>
+          <S N="Parent">abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs</S>
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2014-02-03T00:54:28.07686-05:00</DT>
+          <DT N="CreationTimeUtc">2014-02-03T05:54:28.07686Z</DT>
+          <DT N="LastAccessTime">2014-02-03T00:54:38.0214288-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-02-03T05:54:38.0214288Z</DT>
+          <DT N="LastWriteTime">2014-02-03T00:54:38.0214288-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-02-03T05:54:38.0214288Z</DT>
+          <S N="Attributes">Directory</S>
+        </Props>
+        <MS>
+          <S N="BaseName">124552jkifjkdgf</S>
+          <S N="Mode">d----</S>
+        </MS>
+      </Obj>
+      <B N="Exists">true</B>
+      <Obj N="Root" RefId="18">
+        <TNRef RefId="0" />
+        <ToString>C:\</ToString>
+        <Props>
+          <S N="Name">C:\</S>
+          <Nil N="Parent" />
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2009-07-13T22:38:56.5268176-04:00</DT>
+          <DT N="CreationTimeUtc">2009-07-14T02:38:56.5268176Z</DT>
+          <DT N="LastAccessTime">2014-01-26T10:33:34.8755274-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-01-26T15:33:34.8755274Z</DT>
+          <DT N="LastWriteTime">2014-01-26T10:33:34.8755274-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-01-26T15:33:34.8755274Z</DT>
+          <S N="Attributes">Hidden, System, Directory, NotContentIndexed</S>
+        </Props>
+        <MS>
+          <S N="BaseName">C:\</S>
+          <S N="Mode">d--hs</S>
+        </MS>
+      </Obj>
+      <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff</S>
+      <S N="Extension"></S>
+      <DT N="CreationTime">2014-02-03T00:54:38.0214288-05:00</DT>
+      <DT N="CreationTimeUtc">2014-02-03T05:54:38.0214288Z</DT>
+      <DT N="LastAccessTime">2014-02-03T00:54:49.5430878-05:00</DT>
+      <DT N="LastAccessTimeUtc">2014-02-03T05:54:49.5430878Z</DT>
+      <DT N="LastWriteTime">2014-02-03T00:54:49.5430878-05:00</DT>
+      <DT N="LastWriteTimeUtc">2014-02-03T05:54:49.5430878Z</DT>
+      <Obj N="Attributes" RefId="19">
+        <TNRef RefId="1" />
+        <ToString>Directory</ToString>
+        <I32>16</I32>
+      </Obj>
+    </Props>
+    <MS>
+      <S N="PSPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff</S>
+      <S N="PSParentPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf</S>
+      <S N="PSChildName">drfiehqoiubjkfdbvfdbvdkff</S>
+      <Ref N="PSDrive" RefId="4" />
+      <Ref N="PSProvider" RefId="5" />
+      <B N="PSIsContainer">true</B>
+      <S N="BaseName">drfiehqoiubjkfdbvfdbvdkff</S>
+      <S N="Mode">d----</S>
+    </MS>
+  </Obj>
+  <Obj RefId="20">
+    <TNRef RefId="0" />
+    <ToString>sdfdsfhdsfjksfhkj</ToString>
+    <Props>
+      <S N="Name">sdfdsfhdsfjksfhkj</S>
+      <Obj N="Parent" RefId="21">
+        <TNRef RefId="0" />
+        <ToString>drfiehqoiubjkfdbvfdbvdkff</ToString>
+        <Props>
+          <S N="Name">drfiehqoiubjkfdbvfdbvdkff</S>
+          <S N="Parent">124552jkifjkdgf</S>
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2014-02-03T00:54:38.0214288-05:00</DT>
+          <DT N="CreationTimeUtc">2014-02-03T05:54:38.0214288Z</DT>
+          <DT N="LastAccessTime">2014-02-03T00:54:49.5430878-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-02-03T05:54:49.5430878Z</DT>
+          <DT N="LastWriteTime">2014-02-03T00:54:49.5430878-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-02-03T05:54:49.5430878Z</DT>
+          <S N="Attributes">Directory</S>
+        </Props>
+        <MS>
+          <S N="BaseName">drfiehqoiubjkfdbvfdbvdkff</S>
+          <S N="Mode">d----</S>
+        </MS>
+      </Obj>
+      <B N="Exists">true</B>
+      <Obj N="Root" RefId="22">
+        <TNRef RefId="0" />
+        <ToString>C:\</ToString>
+        <Props>
+          <S N="Name">C:\</S>
+          <Nil N="Parent" />
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2009-07-13T22:38:56.5268176-04:00</DT>
+          <DT N="CreationTimeUtc">2009-07-14T02:38:56.5268176Z</DT>
+          <DT N="LastAccessTime">2014-01-26T10:33:34.8755274-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-01-26T15:33:34.8755274Z</DT>
+          <DT N="LastWriteTime">2014-01-26T10:33:34.8755274-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-01-26T15:33:34.8755274Z</DT>
+          <S N="Attributes">Hidden, System, Directory, NotContentIndexed</S>
+        </Props>
+        <MS>
+          <S N="BaseName">C:\</S>
+          <S N="Mode">d--hs</S>
+        </MS>
+      </Obj>
+      <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff\sdfdsfhdsfjksfhkj</S>
+      <S N="Extension"></S>
+      <DT N="CreationTime">2014-02-03T00:54:43.8957648-05:00</DT>
+      <DT N="CreationTimeUtc">2014-02-03T05:54:43.8957648Z</DT>
+      <DT N="LastAccessTime">2014-02-03T00:54:43.8957648-05:00</DT>
+      <DT N="LastAccessTimeUtc">2014-02-03T05:54:43.8957648Z</DT>
+      <DT N="LastWriteTime">2014-02-03T00:54:43.8957648-05:00</DT>
+      <DT N="LastWriteTimeUtc">2014-02-03T05:54:43.8957648Z</DT>
+      <Obj N="Attributes" RefId="23">
+        <TNRef RefId="1" />
+        <ToString>Directory</ToString>
+        <I32>16</I32>
+      </Obj>
+    </Props>
+    <MS>
+      <S N="PSPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff\sdfdsfhdsfjksfhkj</S>
+      <S N="PSParentPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff</S>
+      <S N="PSChildName">sdfdsfhdsfjksfhkj</S>
+      <Ref N="PSDrive" RefId="4" />
+      <Ref N="PSProvider" RefId="5" />
+      <B N="PSIsContainer">true</B>
+      <S N="BaseName">sdfdsfhdsfjksfhkj</S>
+      <S N="Mode">d----</S>
+    </MS>
+  </Obj>
+  <Obj RefId="24">
+    <TN RefId="6">
+      <T>System.IO.FileInfo</T>
+      <T>System.IO.FileSystemInfo</T>
+      <T>System.MarshalByRefObject</T>
+      <T>System.Object</T>
+    </TN>
+    <ToString>test.txt</ToString>
+    <Props>
+      <S N="Name">test.txt</S>
+      <I64 N="Length">13</I64>
+      <S N="DirectoryName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff</S>
+      <Obj N="Directory" RefId="25">
+        <TNRef RefId="0" />
+        <ToString>C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff</ToString>
+        <Props>
+          <S N="Name">drfiehqoiubjkfdbvfdbvdkff</S>
+          <S N="Parent">124552jkifjkdgf</S>
+          <B N="Exists">true</B>
+          <S N="Root">C:\</S>
+          <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff</S>
+          <S N="Extension"></S>
+          <DT N="CreationTime">2014-02-03T00:54:38.0214288-05:00</DT>
+          <DT N="CreationTimeUtc">2014-02-03T05:54:38.0214288Z</DT>
+          <DT N="LastAccessTime">2014-02-03T00:54:49.5430878-05:00</DT>
+          <DT N="LastAccessTimeUtc">2014-02-03T05:54:49.5430878Z</DT>
+          <DT N="LastWriteTime">2014-02-03T00:54:49.5430878-05:00</DT>
+          <DT N="LastWriteTimeUtc">2014-02-03T05:54:49.5430878Z</DT>
+          <S N="Attributes">Directory</S>
+        </Props>
+        <MS>
+          <S N="BaseName">drfiehqoiubjkfdbvfdbvdkff</S>
+          <S N="Mode">d----</S>
+        </MS>
+      </Obj>
+      <B N="IsReadOnly">false</B>
+      <B N="Exists">true</B>
+      <S N="FullName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff\test.txt</S>
+      <S N="Extension">.txt</S>
+      <DT N="CreationTime">2014-02-03T00:54:49.5430878-05:00</DT>
+      <DT N="CreationTimeUtc">2014-02-03T05:54:49.5430878Z</DT>
+      <DT N="LastAccessTime">2014-02-03T00:54:49.5430878-05:00</DT>
+      <DT N="LastAccessTimeUtc">2014-02-03T05:54:49.5430878Z</DT>
+      <DT N="LastWriteTime">2014-02-03T00:54:51.7392134-05:00</DT>
+      <DT N="LastWriteTimeUtc">2014-02-03T05:54:51.7392134Z</DT>
+      <Obj N="Attributes" RefId="26">
+        <TNRef RefId="1" />
+        <ToString>Archive</ToString>
+        <I32>32</I32>
+      </Obj>
+    </Props>
+    <MS>
+      <S N="PSPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff\test.txt</S>
+      <S N="PSParentPath">Microsoft.PowerShell.Core\FileSystem::C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff</S>
+      <S N="PSChildName">test.txt</S>
+      <Ref N="PSDrive" RefId="4" />
+      <Ref N="PSProvider" RefId="5" />
+      <B N="PSIsContainer">false</B>
+      <Obj N="VersionInfo" RefId="27">
+        <TN RefId="7">
+          <T>System.Diagnostics.FileVersionInfo</T>
+          <T>System.Object</T>
+        </TN>
+        <ToString>File:             C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff\test.txt_x000D__x000A_InternalName:     _x000D__x000A_OriginalFilename: _x000D__x000A_FileVersion:      _x000D__x000A_FileDescription:  _x000D__x000A_Product:          _x000D__x000A_ProductVersion:   _x000D__x000A_Debug:            False_x000D__x000A_Patched:          False_x000D__x000A_PreRelease:       False_x000D__x000A_PrivateBuild:     False_x000D__x000A_SpecialBuild:     False_x000D__x000A_Language:         _x000D__x000A_</ToString>
+        <Props>
+          <Nil N="Comments" />
+          <Nil N="CompanyName" />
+          <I32 N="FileBuildPart">0</I32>
+          <Nil N="FileDescription" />
+          <I32 N="FileMajorPart">0</I32>
+          <I32 N="FileMinorPart">0</I32>
+          <S N="FileName">C:\TEMP\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\abcdefghijklmnopqrstuvwxwdsfdewtreeffq4jojijijjoijwernejvnj_1113343abcdefghijklmnopqrs\124552jkifjkdgf\drfiehqoiubjkfdbvfdbvdkff\test.txt</S>
+          <I32 N="FilePrivatePart">0</I32>
+          <Nil N="FileVersion" />
+          <Nil N="InternalName" />
+          <B N="IsDebug">false</B>
+          <B N="IsPatched">false</B>
+          <B N="IsPrivateBuild">false</B>
+          <B N="IsPreRelease">false</B>
+          <B N="IsSpecialBuild">false</B>
+          <Nil N="Language" />
+          <Nil N="LegalCopyright" />
+          <Nil N="LegalTrademarks" />
+          <Nil N="OriginalFilename" />
+          <Nil N="PrivateBuild" />
+          <I32 N="ProductBuildPart">0</I32>
+          <I32 N="ProductMajorPart">0</I32>
+          <I32 N="ProductMinorPart">0</I32>
+          <Nil N="ProductName" />
+          <I32 N="ProductPrivatePart">0</I32>
+          <Nil N="ProductVersion" />
+          <Nil N="SpecialBuild" />
+        </Props>
+      </Obj>
+      <S N="BaseName">test</S>
+      <S N="Mode">-a---</S>
+    </MS>
+  </Obj>
+</Objs>
