@@ -1,0 +1,29 @@
+﻿Function fParseSeqFiles 
+{
+    param ([Parameter(Mandatory=$true)]$seqfile,[Parameter(Mandatory=$false)]$properties )
+    if (Test-Path $seqfile) {
+        [xml]$sequence = Get-Content $seqfile
+        $presequences = $sequence.Sequence.PreSequences
+        foreach ($presequence in $presequences.PreSequence) {
+            $bExecute = $true
+            $profilechecks = $presequence.profilechecks
+            foreach ($profilecheck in $profilechecks.profilecheck) {
+                if ($buildreg -match $profilecheck.name) {
+                    if ($matches[0]) {$compvalue = $properties.psobject.Properties.Item($matches[0]).value} else {$compvalue = $false}
+                    $bExecute= $bExecute -and $(bProfileCheck $profilecheck.comparison $profilecheck.value $compvalue)
+                }
+            }
+                if ($bExecute) {
+                   "executing " + [System.Environment]::ExpandEnvironmentVariables($presequence.Sequence)
+                    $buildproperties = $properties
+                    $processfile = [System.Environment]::ExpandEnvironmentVariables($presequence.Sequence)
+                    fProcessApps  $processfile $properties
+                    fParseSeqFiles $processfile $properties
+                } else {
+                    "Skipping " + [System.Environment]::ExpandEnvironmentVariables($presequence.Sequence)
+                }
+
+        }
+    }
+
+}
