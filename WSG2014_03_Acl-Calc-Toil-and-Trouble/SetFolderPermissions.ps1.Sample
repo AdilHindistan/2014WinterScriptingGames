@@ -1,0 +1,32 @@
+function Select-Folder($message='Select a folder', $path = 0) {  
+    $object = New-Object -comObject Shell.Application   
+      
+    $folder = $object.BrowseForFolder(0, $message, 0, $path)  
+    if ($folder -ne $null) {  
+        $folder.self.Path  
+    }  
+}  
+$pickFolder = Select-Folder -mess 'Select a folder to permission!' -path '\\srp00267wn\org$'
+
+$ModifyAccess = [int]([System.Security.AccessControl.FileSystemRights]::Modify)
+$ReadAccess = [int]([System.Security.AccessControl.FileSystemRights]::Read)
+$fullAccess = [int]([System.Security.AccessControl.FileSystemRights]::FullControll)
+$Access=[System.Security.AccessControl.AccessControlType]::Allow
+$propagation =[System.Security.AccessControl.PropagationFlags]::InheritOnly 
+$inherit =[System.Security.AccessControl.InheritanceFlags]::ContainerInherit
+$AccessRule = new-object System.Security.AccessControl.FileSystemAccessRule ("MHK_GL_RFP_Rfp_data_W",$ModifyAccess, $inherit, $propagation, $Access)
+
+$acl= Get-Acl $pickFolder 
+
+#Check the group name and rule validation
+$Sid = $AccessRule.IdentityReference.Translate([System.Security.Principal.securityidentifier])
+if ($Sid -ne $null)
+{
+#kill inheritance, drop security - Set to $ACL.SetAccessRuleProtection($true,$True) in order not to drop permissions
+$ACL.SetAccessRuleProtection($true,$false)
+$acl.AddAccessRule $AccessRule
+# add more permissions here
+set-acl -AclObject $ACL -Path $pickFolder
+}else{
+Write-Host 'Could not validate $accessRule. Check if group was properly created'
+}

@@ -1,0 +1,4 @@
+﻿	$acl = Get-Acl $sharepath
+	$newacl = new-object system.security.accesscontrol.filesystemaccessrule($_.NTAccountName, "FullControl", "ContainerInherit, ObjectInherit","None", "Allow")
+	$acl.AddAccessRule($newacl)
+	Set-Acl $sharepath $acl
