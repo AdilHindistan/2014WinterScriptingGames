@@ -15,7 +15,32 @@
     	    <Name>Folder1</Name>
       	    <Parameters>/adminfile %InstallShare%\$BUILDTYPE$\Pkg\OfficeProfessional64Bit_Microsoft_2010_LCL\@artio\desktop.msp</Parameters>
             </Folder>
+            <Folder>
+		        <Permissions>
+			        <Permission> 
+				        <ProfileCheck name="Role" value="Terminal Server" comparison="E"/>
+			        </Permission>
+		        </Permissions>
+    	    <Name>Folder2</Name>
+      	    <Parameters>/adminfile %InstallShare%\$BUILDTYPE$\Pkg\OfficeProfessional64Bit_Microsoft_2010_LCL\@artio\desktop.msp</Parameters>
+            </Folder>
         </Folders>
     </Department>
+
+    <Department>
+        <Name>DepartmentName2</Name>
+        <Folders>
+            <Folder>
+		        <Permissions>
+			        <Permission> 
+				        <ProfileCheck name="Role" value="Terminal Server" comparison="E"/>
+			        </Permission>
+		        </Permissions>
+    	    <Name>FolderDep2</Name>
+      	    <Parameters>/adminfile %InstallShare%\$BUILDTYPE$\Pkg\OfficeProfessional64Bit_Microsoft_2010_LCL\@artio\desktop.msp</Parameters>
+            </Folder>
+        </Folders>
+    </Department>
+
 </Departments>  
 </Org>
