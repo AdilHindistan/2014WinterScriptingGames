@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Org xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+<!--   This file is used to install applications that are commonly used by all regions. -->
+  <Departments>
+    <Department>
+        <Name>DepartmentName</Name>
+        <Folders>
+            <Folder>
+		        <Permissions>
+			        <Permission> 
+				        <ProfileCheck name="Role" value="Terminal Server" comparison="E"/>
+			        </Permission>
+		        </Permissions>
+    	    <Name>Folder1</Name>
+      	    <Parameters>/adminfile %InstallShare%\$BUILDTYPE$\Pkg\OfficeProfessional64Bit_Microsoft_2010_LCL\@artio\desktop.msp</Parameters>
+            </Folder>
+        </Folders>
+    </Department>
+</Departments>  
+</Org>
