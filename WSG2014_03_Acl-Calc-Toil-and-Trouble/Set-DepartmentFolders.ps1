@@ -129,12 +129,101 @@ Function Set-TemplateGroups {
 Function New-DepartmentACL {
 <#
     .SYNOPSIS
-    Create a new Department folder structure
+    Setup permission on a new department structure
 #>
 [CMDLETBINDING()]
 Param(
         [string]$department='Finance'
     )
+    
+    $DepartmentRoot = "$PSScriptRoot\$department"
+    Write-Verbose "Department Root: $DepartmentRoot"
+
+    ## Department Root Folder permissions
+    Write-Verbose "Grant Read-Only to grp_${department} group for $DepartmentRoot"
+    icacls.exe $DepartmentRoot /grant grp_${Department}:R /T /Q  #Grant department Read-Only for all files and sub-folders
+
+    Write-Verbose "Grant Read-Only to grp_audit group for $DepartmentRoot"
+    icacls.exe $DepartmentRoot /grant grp_audit:R /T /Q         #Grant Read-Only to audit group for all files and sub-folders
+
+    Write-Verbose "Grant Read-Only to Authenticated Users (whole organization) for $DepartmentRoot"
+    icacls.exe $DepartmentRoot\Open /grant --% "Authenticated Users":R  
+
+    
+
+    ## OPEN folder permissions
+    Write-Verbose "Setting up Permissions on OPEN folder so that whole organization (authenticated users) can read it but department can also modify"
+    icacls.exe $DepartmentRoot\Open /grant grp_${Department}:M /T /Q #Grant modify to grp_department for all files and sub-folders
+
+    Write-Verbose "Grant whole organization (Authenticated users) permission to read OPEN folder"
+    icacls.exe $DepartmentRoot\Open /grant --% "Authenticated User":R  
+
+    $TeamFolder = Get-ChildItem $DepartmentRoot -Directory |where {$_.name -ne 'OPEN'} #Team Folders
+    Foreach ($tf in $TeamFolder) {
+    
+        $tfFullPath=$tf.FullName
+        $teamName = "grp_$($tf.name)"
+        
+        #lead
+        $teamLeadFullPath="${tfFullPath}_lead"                   # e.g. finance/audit/audit_lead
+        $teamLead="${teamname}_lead"                             # audit_lead
+        Write-Verbose "Grant Full access to $teamLead for $teamLeadFullPath"
+        icacls.exe $teamleadFullPath /grant ${teamLead}:F /T  /Q   
+    
+        #private
+        $teamPrivateFullPath="${tfFullPath}_private"             # e.g. finance/audit/audit_private        
+        Write-Verbose "Grant Modify to team $teamname for $teamPrivateFullPath"
+        icacls.exe $teamPrivateFullPath /grant ${teamname}:M /T /Q
+
+        #shared        
+        $teamSharedFullPath="${tfFullPath}_shared"                     # e.g. finance/audit/audit_shared
+        
+        Write-Verbose "Grant modify to $teamName for $teamSharedFullPath"
+        icacls.exe $teamSharedFullPath /grant ${teamName}:M /T /Q        
+        
+        Write-Verbose "Grant Read-only to whole grp_${department} department"
+        icacls.exe $teamSharedFullPath /grant grp_${department}:R /T /Q ## Read by department
+
+    }
+}
+
+function Export-OriginalACL {
+<#
+    .SYNOPSIS
+    Save original ACL on a department folder structure
+#>
+    [CMDLETBINDING()]
+    param (
+            [ValidateScript({Test-Path "$PsScriptRoot\$_"})]
+            [string]$department='Finance'
+           )
+    
+    $DepartmentFolders = Get-ChildItem "$PSScriptRoot\$department" -Recurse -Directory
+
+    Foreach ($d in $DepartmentFolders) {
+            
+        $dirPath = $d.FullName
+        $savePath = $dirpath -replace "(.*)($department.*)",'$2' -replace '\\','_'   ## replaces ...\xyz\finance\audit with finance_audit
+                
+        $savefile = "originalacl_${savepath}_$(get-date -Format "yyyyMMdd")"   ## e.g. finance/audit_20140206_114402
+
+        Write-Verbose "Saving Original ACL file for $dirPath into $savefile"
+        icacls.exe $dirPath /save $saveFile /Q ## need to include full path or some way of identifing which folder this 
+
+    }
+
+    if (!(test-path "$PSScriptRoot\originalACL")) {
+            
+        Write-Verbose "Creating ${PSSCriptRoot}\OriginalACL folder"
+        $null = new-item -Path "$PSScriptRoot\originalACL" -ItemType directory -Force                    
+
+    }
+
+    Write-Verbose "Moving saved ACL file for each $department folder to ${PSSCriptRoot}\OriginalACL folder"
+    Move-Item -path $PSScriptRoot\originalacl_* -destination "$PSScriptRoot\OriginalACL" -force
+    
+
+
 }
 
 #endregion functions
@@ -143,5 +232,8 @@ Param(
 
 New-DepartmentFolder
 Set-TemplateGroups
+
+New-DepartmentACL
+Export-OriginalACL
 
 #endregion Main_Script
