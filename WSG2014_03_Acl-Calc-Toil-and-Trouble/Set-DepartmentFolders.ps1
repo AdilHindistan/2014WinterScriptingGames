@@ -1,8 +1,19 @@
 ﻿<#
     .SYNOPSIS
     Set up and maintain new Department Folder Structure
+    
     .DESCRIPTION
     Set up and maintain new Department Folder Structure.
+
+    .PARAMETER NewDepartmentSetup
+    Sets up New Department Folder Structure
+
+    .PARAMETER ReportACL
+    Prepares and HTML report of current ACL on department folder structure
+
+    .PARAMETER FixACL
+    Detects any folders that does not match original ACL and restores ACL from the originally saved ACL file
+    
     .NOTES
     Uses icacls to save/restore permissions. All reports, saved files are under ACL folder which resides under script folder
 
@@ -10,7 +21,8 @@
 [CMDLETBINDING()]
 Param(
     [switch]$NewDepartmentSetup,
-    [switch]$ReportACL
+    [switch]$ReportACL,
+    [switch]$FixACL
 
 )
 
@@ -86,8 +98,8 @@ Function New-DepartmentFolder {
                         Write-Verbose "$teamFolder needs to be created"                        
                         $null = New-Item -Path $teamFolder -ItemType Directory -Force 
                         
-                        Write-Verbose "Following is not needed in production."
-                        New-TestFolders -path $teamFolder                                                  
+                   #     Write-Verbose "Following is not needed in production. Used to create several test subfolders"
+                   #     New-TestFolders -path $teamFolder                                                  
                     }
         }
     
@@ -250,8 +262,7 @@ function Export-OriginalACL {
     Save original ACL on a department folder structure as csv to use when reporting and as icacls output for restoring
 #>
     [CMDLETBINDING()]
-    param (
-            [ValidateScript({Test-Path "$PsScriptRoot\$_"})]
+    param (            
             [string]$department='Finance'
            )
     
@@ -284,6 +295,50 @@ function Export-OriginalACL {
     Write-Verbose "Moving saved ACL file for each $department folder to ${PSSCriptRoot}\ACL folder"
     Move-Item -path $PSScriptRoot\OriginalACL.* -destination "$PSScriptRoot\ACL" -force
     
+}
+
+function Fix-DepartmentACL {
+<#
+    .SYNOPSIS
+    Fix ACL on a department folder structure
+    
+    .DESCRIPTION
+    Find and fix broken ACL on folders by restoring it from original ACLs
+#>
+    [CMDLETBINDING()]
+    param (                
+            [string]$department='Finance'
+           )
+    
+    $tempACLFile = "$PSScriptRoot\tempACLfile.txt"
+
+    $DepartmentFolders = Get-ChildItem "$PSScriptRoot\$department" -Recurse -Directory
+    $OriginalACLFiles = Get-ChildItem "$PSScriptRoot\ACL\Original*.txt"
+
+    ## strip off OriginalACL.{date} and .txt, leaving folderpath behind e.g. OriginalACL.20140504.0102.Finance_Receipts.txt ->finance_receipts
+    $OriginalACLStripped = ($OriginalACLFiles).FullName -replace ".*\.(${department}.*).txt",'$1' 
+
+    Foreach ($d in $DepartmentFolders) { 
+        $dirPath = $d.FullName
+        $savePath = $dirpath -replace "(.*)($department.*)",'$2' -replace '\\','_'        #e.g. finance_receipts
+        
+        if ($savePath -in $OriginalACLStripped) {
+            
+            icacls.exe $dirPath /save $tempACLFile /Q            
+
+            $originalACLFile=(Get-Item "$PSScriptRoot\ACL\OriginalACL.*.$SavePath.txt").FullName
+            
+            $changed = Compare (Get-Content $tempACLFile) (Get-Content $originalACLFile) -PassThru
+
+            if ($changed) {                
+                $ParentPath = split-path $dirPath
+                icacls.exe $ParentPath /restore $originalACLFile /Q >$null
+                Write-Verbose "Restoring $dirPath from $OriginalACLFile"
+                
+            }        
+        
+        }
+    }
 }
 
 Function Export-DepartmentFolderACLToHTML {
@@ -353,6 +408,10 @@ If ($NewDepartmentSetup) {
 
 if ($ReportACL) {
     Export-DepartmentFolderACLToHTML
+}
+
+if ($fixACL) {
+    Fix-DepartmentACL
 }
 
 #endregion Main_Script
