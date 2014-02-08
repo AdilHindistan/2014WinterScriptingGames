@@ -1,10 +1,18 @@
 ﻿<#
     .SYNOPSIS
     Set up and maintain new Department Folder Structure
+    .DESCRIPTION
+    Set up and maintain new Department Folder Structure.
+    .NOTES
+    Uses icacls to save/restore permissions. All reports, saved files are under ACL folder which resides under script folder
 
 #>
 [CMDLETBINDING()]
-Param()
+Param(
+    [switch]$NewDepartmentSetup,
+    [switch]$ReportACL
+
+)
 
 #region functions
 
@@ -179,21 +187,21 @@ Param(
 
     #region Department Root Folder permissions    
     Write-Verbose "Grant Read-Only to grp_${department} group for $DepartmentRoot"
-    icacls.exe $DepartmentRoot /grant grp_${Department}:`(NP`)R /Q  
+    icacls.exe $DepartmentRoot /grant grp_${Department}:`(NP`)R /Q  >$null
 
     Write-Verbose "Grant Read-Only to grp_audit group for $DepartmentRoot" 
-    icacls.exe $DepartmentRoot /grant --% grp_audit:(CI)(OI)R /Q             
+    icacls.exe $DepartmentRoot /grant grp_audit:`(CI`)`(OI`)R /Q >$null          
 
     Write-Verbose "Grant Read-Only to All users (whole organization) for $DepartmentRoot only"
-    icacls.exe ${DepartmentRoot} /grant --% grp_AllUsers:(NP)R
+    icacls.exe ${DepartmentRoot} /grant grp_AllUsers:`(NP`)R >$null
     #endregion Department Root
     
     #region OPEN folder permissions
     Write-Verbose "Setting up Permissions on OPEN folder so that whole organization (authenticated users) can read it but department can also modify"
-    icacls.exe ${DepartmentRoot}\Open /grant grp_${Department}:`(CI`)`(OI`)M /Q 
+    icacls.exe ${DepartmentRoot}\Open /grant grp_${Department}:`(CI`)`(OI`)M /Q >$null
 
     Write-Verbose "Grant whole organization permission to read OPEN folder"
-    icacls.exe ${DepartmentRoot}\Open /grant --% grp_AllUsers:(CI)(OI)R
+    icacls.exe ${DepartmentRoot}\Open /grant grp_AllUsers:`(CI`)`(OI`)R >$null
     #endregion Open folder permissions
 
     
@@ -206,27 +214,27 @@ Param(
 
         ## Root of team folders
         Write-Verbose "Grant Readonly access to $teamName for $tfFullPath"
-        icacls.exe $tfFullPath /grant ${teamName}:`(NP`)R /Q
+        icacls.exe $tfFullPath /grant ${teamName}:`(NP`)R /Q >$null
         
         #lead
         $teamLeadFullPath="${tfFullPath}\lead"                   # e.g. finance/audit/lead
         $teamLead="${teamname}_lead"                             # audit_lead
         Write-Verbose "Grant Full access to $teamLead for $teamLeadFullPath"
-        icacls.exe $teamleadFullPath /grant ${teamLead}:`(CI`)`(OI`)F /Q
+        icacls.exe $teamleadFullPath /grant ${teamLead}:`(CI`)`(OI`)F /Q >$null
     
         #private
         $teamPrivateFullPath="${tfFullPath}\private"             # e.g. finance/audit/private        
         Write-Verbose "Grant Modify to team $teamname for $teamPrivateFullPath"
-        icacls.exe $teamPrivateFullPath /grant ${teamname}:`(CI`)`(OI`)M /Q
+        icacls.exe $teamPrivateFullPath /grant ${teamname}:`(CI`)`(OI`)M /Q >$null
 
         #shared        
         $teamSharedFullPath="${tfFullPath}\shared"                     # e.g. finance/audit/shared
         
         Write-Verbose "Grant modify to $teamName for $teamSharedFullPath"
-        icacls.exe $teamSharedFullPath /grant ${teamName}:`(CI`)`(OI`)M /Q
+        icacls.exe $teamSharedFullPath /grant ${teamName}:`(CI`)`(OI`)M /Q >$null
         
         Write-Verbose "Grant Read-only to whole grp_${department} department"
-        icacls.exe $teamSharedFullPath /grant grp_${department}:`(CI`)`(OI`)R /Q ## Read by department
+        icacls.exe $teamSharedFullPath /grant grp_${department}:`(CI`)`(OI`)R /Q >$null ## Read by department
 
     }
     #endregion team folders
@@ -310,6 +318,8 @@ function Export-OriginalACL {
 <#
     .SYNOPSIS
     Save original ACL on a department folder structure
+    .DESCRIPTION
+    Save original ACL on a department folder structure as csv to use when reporting and as icacls output for restoring
 #>
     [CMDLETBINDING()]
     param (
@@ -324,35 +334,97 @@ function Export-OriginalACL {
         $dirPath = $d.FullName
         $savePath = $dirpath -replace "(.*)($department.*)",'$2' -replace '\\','_'   ## replaces ...\xyz\finance\audit with finance_audit
                 
-        $savefile = "originalacl_${savepath}_$(get-date -Format "yyyyMMdd")"   ## e.g. finance/audit_20140206_114402
+        $savefile = "OriginalACL.$(get-date -Format "yyyyMMdd.hhmm").${savepath}.txt"   ## e.g. OriginalACL.20140206.1144.finance_audit.txt
+        $saveCSVfile = "OriginalACL.$(get-date -Format "yyyyMMdd.hhmm").${savepath}.csv"   ## e.g. OriginalACL.20140206.1144.finance_audit.csv
 
-        Write-Verbose "Saving Original ACL file for $dirPath into $savefile"
-        icacls.exe $dirPath /save $saveFile /Q ## need to include full path or some way of identifing which folder this 
+        Write-Verbose "Saving Original ACL file for $dirPath into $savefile for restore purposes"
+        icacls.exe $dirPath /save $saveFile /Q # not using /T to include subfolders
 
+        $dirACL = (Get-Acl $dirPath).Access | Where-Object {$_.IdentityReference -notmatch 'Builtin|Authority'} 
+            
+        Write-Verbose "Exporting Original ACL file to  $dirPath into $saveCSVfile for reporting purposes"
+        $dirACL | Select-Object @{l='Path';e={$dirPath}},FileSystemRights, AccessControlType, IdentityReference, InheritanceFlags, IsInherited, PropagationFlags |Export-Csv $SaveCSVfile         
     }
 
     if (!(test-path "$PSScriptRoot\originalACL")) {
             
-        Write-Verbose "Creating ${PSSCriptRoot}\OriginalACL folder"
-        $null = new-item -Path "$PSScriptRoot\originalACL" -ItemType directory -Force                    
+        Write-Verbose "Creating ${PSSCriptRoot}\ACL folder"
+        $null = new-item -Path "$PSScriptRoot\ACL" -ItemType directory -Force                    
 
     }
 
-    Write-Verbose "Moving saved ACL file for each $department folder to ${PSSCriptRoot}\OriginalACL folder"
-    Move-Item -path $PSScriptRoot\originalacl_* -destination "$PSScriptRoot\OriginalACL" -force
+    Write-Verbose "Moving saved ACL file for each $department folder to ${PSSCriptRoot}\ACL folder"
+    Move-Item -path $PSScriptRoot\OriginalACL.* -destination "$PSScriptRoot\ACL" -force
     
-
-
 }
+
+Function Export-DepartmentFolderACLToHTML {
+<#
+    .SYNOPSIS
+    Export ACL on a department folder structure
+#>
+    [CMDLETBINDING()]
+    param (
+            [ValidateScript({Test-Path "$PsScriptRoot\$_"})]
+            [string]$department='Finance'
+           )
+
+    $DepartmentFolders = Get-ChildItem "$PSScriptRoot\$department" -Recurse -Directory
+
+    $Fragments=''
+    Foreach ($d in $DepartmentFolders) {
+            
+            $dirPath = $d.FullName 
+            $dirSavePath = $dirpath -replace "(.*)($department.*)",'$2' -replace '\\','_'   ## replaces ...\xyz\finance\audit with finance_audit                
+            $dirSavefile = "ACL.$(get-date -Format "yyyyMMdd.hhmm").${dirsavepath}.csv"     ## e.g. ACL.20140206.1144.finance_audit.csv                 
+              
+            $dirACL = (Get-Acl $dirPath).Access | Where-Object {$_.IdentityReference -notmatch 'Builtin|Authority'} 
+            
+            Write-Verbose "Exporting ACL for directory $dirPath"
+            $dirACL | Select-Object @{l='Path';e={$dirPath}},FileSystemRights, AccessControlType, IdentityReference, InheritanceFlags, IsInherited, PropagationFlags |Export-Csv $dirSavefile         
+    
+        Write-Verbose "Creating html fragment for $dirPath"
+        $fragments +=$dirACL |ConvertTo-Html -as List -Fragment -PreContent "<H2>ACL for $dirPath</H2>" |out-string
+    }
+    
+$head=@'
+    <style>
+        body { background-color:#dddddd;
+               font-family:Tahoma;
+               font-size:12pt; }
+        td, th { border:1px solid black; 
+                 border-collapse:collapse; }
+        th { color:white;
+             background-color:black; }
+        table, tr, td, th { padding: 2px; margin: 0px }
+        table { margin-left:50px; }
+        </style>
+'@
+
+
+    $saveHTMLfile = "ACL.$(get-date -Format "yyyyMMdd.hhmm").${department}.html"   ## e.g. ACL.20140206.1144.finance_audit.txt
+    Write-Verbose "Saving ACL report for $department to $saveHTMLfile"
+    ConvertTo-Html -Head $head -PostContent $Fragments -Title "$Department ACL Report" -Body "<H1>$Department ACL Report<h1>" |out-file $saveHTMLfile
+
+    Write-Verbose "Moving saved ACL files for each $department folder to ${PSSCriptRoot}\ACL folder"
+    Move-Item -path $PSScriptRoot\ACL.* -destination "$PSScriptRoot\ACL" -force
+}
+
 
 #endregion functions
 
 #region Main_Script
 
-New-DepartmentFolder
-Set-TemplateGroups
+If ($NewDepartmentSetup) {
+    New-DepartmentFolder
+    Set-TemplateGroups
 
-New-DepartmentACL
-Export-OriginalACL
+    New-DepartmentACL
+    Export-OriginalACL
+}
+
+if ($ReportACL) {
+    Export-DepartmentFolderACLToHTML
+}
 
 #endregion Main_Script
