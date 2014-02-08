@@ -8,6 +8,32 @@ Param()
 
 #region functions
 
+Function New-TestFolders {
+<#
+    .SYNOPSIS
+    Create a test folder structure 
+    .DESCRIPTION 
+    Creates a test folder structure under Department for testing script.
+#>
+    [CMDLETBINDING()]
+    param (            
+            [validatescript({Test-Path $_})]
+            [string]$path
+            )
+    
+    1..3 | ForEach-Object { 
+        $TestFolder= "TestFolder$_"
+        $SubTestFolder = "$path\$TestFolder\"
+        1..5 | ForEach-Object {
+                
+                    $sub= "Sub" * $_
+                    $SubTestFolder += "${Sub}${TestFolder}\"
+                }
+       Write-Verbose "Creating test folder structure $SubTestFolder"
+       $null =New-Item -Path $SubTestFolder -ItemType Directory -Force
+    }
+}
+
 Function New-DepartmentFolder {
 <#
     .SYNOPSIS
@@ -50,7 +76,10 @@ Function New-DepartmentFolder {
 
                     } else {                        
                         Write-Verbose "$teamFolder needs to be created"                        
-                        $null = New-Item -Path $teamFolder -ItemType Directory -Force                                                    
+                        $null = New-Item -Path $teamFolder -ItemType Directory -Force 
+                        
+                        Write-Verbose "Following is not needed in production."
+                        New-TestFolders -path $teamFolder                                                  
                     }
         }
     
@@ -66,7 +95,9 @@ Function Set-TemplateGroups {
     Sets up AD groups for department, teams, and team leads
     .EXAMPLE
         PS> Set-TemplateGroups -Verbose
+        VERBOSE: Attempting to create group AllUsers
         VERBOSE: Attempting to create department group grp_Finance
+        VERBOSE: Adding grp_Finance into grp_AllUsers as a member
         VERBOSE: Attempting to create team group grp_Receipts
         VERBOSE: Adding grp_Receipts into grp_Finance as a member
         VERBOSE: Attempting to create team lead group grp_Receipts_Lead
@@ -88,13 +119,20 @@ Function Set-TemplateGroups {
     param (            
             [string]$department='Finance',
             [string[]]$team=@('Receipts','Payments','Audit','Accounting'),
-            [string]$ADPath = "OU=groups,OU=EUDE,DC=nyumc,DC=org"    ## !!!REMOVE_THIS_BEFORE_SUBMISSION!!!
+            [string]$ADPath = "OU=groups,OU=EUDE,DC=nyumc,DC=org"    ## !!!REMOVE_THIS_&_SERVER_BEFORE_SUBMISSION!!!
             )    
     Begin {
              try {
+                
+                Write-Verbose "Attempting to create group AllUsers."            
+                $AllUsers = New-AdGroup -Name "grp_AllUsers" -GroupScope DomainLocal -GroupCategory Security -Path $ADPath -Server ADSWCDCPVM008 -PassThru 
+                    
                 Write-Verbose "Attempting to create department group grp_$department"            
                 $departmentGroup = New-AdGroup -Name "grp_${department}" -GroupScope DomainLocal -GroupCategory Security -Path $ADPath -Server ADSWCDCPVM008 -PassThru 
                 #$departmentGroup = Get-ADGroup -Identity "grp_${department}"
+
+                Write-Verbose "Adding grp_${department} into grp_AllUsers as a member"
+                Add-ADGroupMember -Identity $AllUsers -Members "$departmentGroup" -Server ADSWCDCPVM008
             }
             catch {
                 Write-Verbose $_
@@ -139,52 +177,59 @@ Param(
     $DepartmentRoot = "$PSScriptRoot\$department"
     Write-Verbose "Department Root: $DepartmentRoot"
 
-    ## Department Root Folder permissions
+    #region Department Root Folder permissions    
     Write-Verbose "Grant Read-Only to grp_${department} group for $DepartmentRoot"
-    icacls.exe $DepartmentRoot /grant grp_${Department}:R /T /Q  #Grant department Read-Only for all files and sub-folders
+    icacls.exe $DepartmentRoot /grant grp_${Department}:`(NP`)R /Q  
 
-    Write-Verbose "Grant Read-Only to grp_audit group for $DepartmentRoot"
-    icacls.exe $DepartmentRoot /grant grp_audit:R /T /Q         #Grant Read-Only to audit group for all files and sub-folders
+    Write-Verbose "Grant Read-Only to grp_audit group for $DepartmentRoot" 
+    icacls.exe $DepartmentRoot /grant --% grp_audit:(CI)(OI)R /Q             
 
-    Write-Verbose "Grant Read-Only to Authenticated Users (whole organization) for $DepartmentRoot"
-    icacls.exe ${DepartmentRoot}\Open /grant --% "Authenticated Users":R  
+    Write-Verbose "Grant Read-Only to All users (whole organization) for $DepartmentRoot only"
+    icacls.exe ${DepartmentRoot} /grant --% grp_AllUsers:(NP)R
+    #endregion Department Root
+    
+    #region OPEN folder permissions
+    Write-Verbose "Setting up Permissions on OPEN folder so that whole organization (authenticated users) can read it but department can also modify"
+    icacls.exe ${DepartmentRoot}\Open /grant grp_${Department}:`(CI`)`(OI`)M /Q 
+
+    Write-Verbose "Grant whole organization permission to read OPEN folder"
+    icacls.exe ${DepartmentRoot}\Open /grant --% grp_AllUsers:(CI)(OI)R
+    #endregion Open folder permissions
 
     
-
-    ## OPEN folder permissions
-    Write-Verbose "Setting up Permissions on OPEN folder so that whole organization (authenticated users) can read it but department can also modify"
-    icacls.exe ${DepartmentRoot}\Open /grant:r grp_${Department}:M /T /Q #Grant modify to grp_department for all files and sub-folders
-
-    Write-Verbose "Grant whole organization (Authenticated users) permission to read OPEN folder"
-    icacls.exe ${DepartmentRoot}\Open /grant:r --% "Authenticated User":R  
-
+    #region Team Folders
     $TeamFolder = Get-ChildItem $DepartmentRoot -Directory |where {$_.name -ne 'OPEN'} #Team Folders
     Foreach ($tf in $TeamFolder) {
     
         $tfFullPath=$tf.FullName  
         $teamName = "grp_$($tf.name)"
+
+        ## Root of team folders
+        Write-Verbose "Grant Readonly access to $teamName for $tfFullPath"
+        icacls.exe $tfFullPath /grant ${teamName}:`(NP`)R /Q
         
         #lead
         $teamLeadFullPath="${tfFullPath}\lead"                   # e.g. finance/audit/lead
         $teamLead="${teamname}_lead"                             # audit_lead
         Write-Verbose "Grant Full access to $teamLead for $teamLeadFullPath"
-        icacls.exe $teamleadFullPath /grant ${teamLead}:F /T  /Q   
+        icacls.exe $teamleadFullPath /grant ${teamLead}:`(CI`)`(OI`)F /Q
     
         #private
         $teamPrivateFullPath="${tfFullPath}\private"             # e.g. finance/audit/private        
         Write-Verbose "Grant Modify to team $teamname for $teamPrivateFullPath"
-        icacls.exe $teamPrivateFullPath /grant ${teamname}:M /T /Q
+        icacls.exe $teamPrivateFullPath /grant ${teamname}:`(CI`)`(OI`)M /Q
 
         #shared        
         $teamSharedFullPath="${tfFullPath}\shared"                     # e.g. finance/audit/shared
         
         Write-Verbose "Grant modify to $teamName for $teamSharedFullPath"
-        icacls.exe $teamSharedFullPath /grant ${teamName}:M /T /Q        
+        icacls.exe $teamSharedFullPath /grant ${teamName}:`(CI`)`(OI`)M /Q
         
         Write-Verbose "Grant Read-only to whole grp_${department} department"
-        icacls.exe $teamSharedFullPath /grant grp_${department}:R /T /Q ## Read by department
+        icacls.exe $teamSharedFullPath /grant grp_${department}:`(CI`)`(OI`)R /Q ## Read by department
 
     }
+    #endregion team folders
 
 <#
     Test: 
