@@ -239,79 +239,7 @@ Param(
     }
     #endregion team folders
 
-<#
-    Test: 
-    1) remove inheritance: icacls.exe .\finance /inheritance:r /t
-    2) Run script, remove my id 
-    3) check results icacls.exe .\finance /t |? {$_ -notmatch 'hindia01'}
-    $) fix: grp_Finance :Read access should not go all the way down!
 
-    .\finance\ NYUMC\grp_audit:(R)
-            NYUMC\grp_Finance:(R)
-
-    .\finance\Accounting NYUMC\grp_audit:(R)
-                            NYUMC\grp_Finance:(R)
-
-    .\finance\Audit NYUMC\grp_audit:(R)
-                    NYUMC\grp_Finance:(R)
-
-    .\finance\OPEN NT AUTHORITY\Authenticated Users:(R)
-                    NYUMC\grp_audit:(R)
-                    NYUMC\grp_Finance:(M)
-
-    .\finance\Payments NYUMC\grp_audit:(R)
-                        NYUMC\grp_Finance:(R)
-
-    .\finance\Receipts NYUMC\grp_audit:(R)
-                        NYUMC\grp_Finance:(R)
-
-    .\finance\Accounting\Lead NYUMC\grp_Accounting_lead:(F)
-                                NYUMC\grp_audit:(R)
-                                NYUMC\grp_Finance:(R)
-
-    .\finance\Accounting\Private NYUMC\grp_Accounting:(M)
-                                    NYUMC\grp_audit:(R)
-                                    NYUMC\grp_Finance:(R)
-
-    .\finance\Accounting\Shared NYUMC\grp_Accounting:(M)
-                                NYUMC\grp_audit:(R)
-                                NYUMC\grp_Finance:(R)
-
-    .\finance\Audit\Lead NYUMC\grp_Audit_lead:(F)
-                            NYUMC\grp_audit:(R)
-                            NYUMC\grp_Finance:(R)
-
-    .\finance\Audit\Private NYUMC\grp_audit:(M)
-                            NYUMC\grp_Finance:(R)
-
-    .\finance\Audit\Shared NYUMC\grp_audit:(M)
-                            NYUMC\grp_Finance:(R)
-
-    .\finance\Payments\Lead NYUMC\grp_Payments_lead:(F)
-                            NYUMC\grp_audit:(R)
-                            NYUMC\grp_Finance:(R)
-
-    .\finance\Payments\Private NYUMC\grp_Payments:(M)
-                                NYUMC\grp_audit:(R)
-                                NYUMC\grp_Finance:(R)
-
-    .\finance\Payments\Shared NYUMC\grp_Payments:(M)
-                                NYUMC\grp_audit:(R)
-                                NYUMC\grp_Finance:(R)
-
-    .\finance\Receipts\Lead NYUMC\grp_Receipts_lead:(F)
-                            NYUMC\grp_audit:(R)
-                            NYUMC\grp_Finance:(R)
-
-    .\finance\Receipts\Private NYUMC\grp_Receipts:(M)
-                                NYUMC\grp_audit:(R)
-                                NYUMC\grp_Finance:(R)
-
-    .\finance\Receipts\Shared NYUMC\grp_Receipts:(M)
-                                NYUMC\grp_audit:(R)
-                                NYUMC\grp_Finance:(R)
-
-#>
 }
 
 function Export-OriginalACL {
