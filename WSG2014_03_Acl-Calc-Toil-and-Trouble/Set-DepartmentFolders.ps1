@@ -147,36 +147,36 @@ Param(
     icacls.exe $DepartmentRoot /grant grp_audit:R /T /Q         #Grant Read-Only to audit group for all files and sub-folders
 
     Write-Verbose "Grant Read-Only to Authenticated Users (whole organization) for $DepartmentRoot"
-    icacls.exe $DepartmentRoot\Open /grant --% "Authenticated Users":R  
+    icacls.exe ${DepartmentRoot}\Open /grant --% "Authenticated Users":R  
 
     
 
     ## OPEN folder permissions
     Write-Verbose "Setting up Permissions on OPEN folder so that whole organization (authenticated users) can read it but department can also modify"
-    icacls.exe $DepartmentRoot\Open /grant grp_${Department}:M /T /Q #Grant modify to grp_department for all files and sub-folders
+    icacls.exe ${DepartmentRoot}\Open /grant:r grp_${Department}:M /T /Q #Grant modify to grp_department for all files and sub-folders
 
     Write-Verbose "Grant whole organization (Authenticated users) permission to read OPEN folder"
-    icacls.exe $DepartmentRoot\Open /grant --% "Authenticated User":R  
+    icacls.exe ${DepartmentRoot}\Open /grant:r --% "Authenticated User":R  
 
     $TeamFolder = Get-ChildItem $DepartmentRoot -Directory |where {$_.name -ne 'OPEN'} #Team Folders
     Foreach ($tf in $TeamFolder) {
     
-        $tfFullPath=$tf.FullName
+        $tfFullPath=$tf.FullName  
         $teamName = "grp_$($tf.name)"
         
         #lead
-        $teamLeadFullPath="${tfFullPath}_lead"                   # e.g. finance/audit/audit_lead
+        $teamLeadFullPath="${tfFullPath}\lead"                   # e.g. finance/audit/lead
         $teamLead="${teamname}_lead"                             # audit_lead
         Write-Verbose "Grant Full access to $teamLead for $teamLeadFullPath"
         icacls.exe $teamleadFullPath /grant ${teamLead}:F /T  /Q   
     
         #private
-        $teamPrivateFullPath="${tfFullPath}_private"             # e.g. finance/audit/audit_private        
+        $teamPrivateFullPath="${tfFullPath}\private"             # e.g. finance/audit/private        
         Write-Verbose "Grant Modify to team $teamname for $teamPrivateFullPath"
         icacls.exe $teamPrivateFullPath /grant ${teamname}:M /T /Q
 
         #shared        
-        $teamSharedFullPath="${tfFullPath}_shared"                     # e.g. finance/audit/audit_shared
+        $teamSharedFullPath="${tfFullPath}\shared"                     # e.g. finance/audit/shared
         
         Write-Verbose "Grant modify to $teamName for $teamSharedFullPath"
         icacls.exe $teamSharedFullPath /grant ${teamName}:M /T /Q        
@@ -185,6 +185,80 @@ Param(
         icacls.exe $teamSharedFullPath /grant grp_${department}:R /T /Q ## Read by department
 
     }
+
+<#
+    Test: 
+    1) remove inheritance: icacls.exe .\finance /inheritance:r /t
+    2) Run script, remove my id 
+    3) check results icacls.exe .\finance /t |? {$_ -notmatch 'hindia01'}
+    $) fix: grp_Finance :Read access should not go all the way down!
+
+    .\finance\ NYUMC\grp_audit:(R)
+            NYUMC\grp_Finance:(R)
+
+    .\finance\Accounting NYUMC\grp_audit:(R)
+                            NYUMC\grp_Finance:(R)
+
+    .\finance\Audit NYUMC\grp_audit:(R)
+                    NYUMC\grp_Finance:(R)
+
+    .\finance\OPEN NT AUTHORITY\Authenticated Users:(R)
+                    NYUMC\grp_audit:(R)
+                    NYUMC\grp_Finance:(M)
+
+    .\finance\Payments NYUMC\grp_audit:(R)
+                        NYUMC\grp_Finance:(R)
+
+    .\finance\Receipts NYUMC\grp_audit:(R)
+                        NYUMC\grp_Finance:(R)
+
+    .\finance\Accounting\Lead NYUMC\grp_Accounting_lead:(F)
+                                NYUMC\grp_audit:(R)
+                                NYUMC\grp_Finance:(R)
+
+    .\finance\Accounting\Private NYUMC\grp_Accounting:(M)
+                                    NYUMC\grp_audit:(R)
+                                    NYUMC\grp_Finance:(R)
+
+    .\finance\Accounting\Shared NYUMC\grp_Accounting:(M)
+                                NYUMC\grp_audit:(R)
+                                NYUMC\grp_Finance:(R)
+
+    .\finance\Audit\Lead NYUMC\grp_Audit_lead:(F)
+                            NYUMC\grp_audit:(R)
+                            NYUMC\grp_Finance:(R)
+
+    .\finance\Audit\Private NYUMC\grp_audit:(M)
+                            NYUMC\grp_Finance:(R)
+
+    .\finance\Audit\Shared NYUMC\grp_audit:(M)
+                            NYUMC\grp_Finance:(R)
+
+    .\finance\Payments\Lead NYUMC\grp_Payments_lead:(F)
+                            NYUMC\grp_audit:(R)
+                            NYUMC\grp_Finance:(R)
+
+    .\finance\Payments\Private NYUMC\grp_Payments:(M)
+                                NYUMC\grp_audit:(R)
+                                NYUMC\grp_Finance:(R)
+
+    .\finance\Payments\Shared NYUMC\grp_Payments:(M)
+                                NYUMC\grp_audit:(R)
+                                NYUMC\grp_Finance:(R)
+
+    .\finance\Receipts\Lead NYUMC\grp_Receipts_lead:(F)
+                            NYUMC\grp_audit:(R)
+                            NYUMC\grp_Finance:(R)
+
+    .\finance\Receipts\Private NYUMC\grp_Receipts:(M)
+                                NYUMC\grp_audit:(R)
+                                NYUMC\grp_Finance:(R)
+
+    .\finance\Receipts\Shared NYUMC\grp_Receipts:(M)
+                                NYUMC\grp_audit:(R)
+                                NYUMC\grp_Finance:(R)
+
+#>
 }
 
 function Export-OriginalACL {
