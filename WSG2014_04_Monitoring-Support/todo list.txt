@@ -1,0 +1,7 @@
+To Do List
+
+1. Create config file for all the nodes
+2. Write a sction to build the MoF files and start the configuiration
+3. create PULL service in the various nodes
+4. write a DSC to pull config and compare config
+5. Create a HTML report
