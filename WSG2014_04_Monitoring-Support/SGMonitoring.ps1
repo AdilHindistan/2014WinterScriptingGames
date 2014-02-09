@@ -20,8 +20,8 @@
             Ensure = "Present" 
             Type = "file" 
            # Recurse = $true 
-            SourcePath = "C:\SG2014\monitoring.xml"
-            DestinationPath = "c:\drsmonitoring\monitoring.xml"    
+            SourcePath = "C:\SG2014\DRSConfig.xml"
+            DestinationPath = "c:\drsmonitoring\DRSConfig.xml"    
         }
 
         #trying to use the Log to create the report
