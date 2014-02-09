@@ -1,0 +1,4 @@
+#TYPE Selected.System.Security.AccessControl.FileSystemAccessRule
+"Path","FileSystemRights","AccessControlType","IdentityReference","InheritanceFlags","IsInherited","PropagationFlags"
+"D:\git\PhillyPosh\WSG2014_03_Acl-Calc-Toil-and-Trouble\Finance\Accounting\Private","Modify, Synchronize","Allow","NYUMC\grp_Accounting","ContainerInherit, ObjectInherit","False","None"
+"D:\git\PhillyPosh\WSG2014_03_Acl-Calc-Toil-and-Trouble\Finance\Accounting\Private","Read, Synchronize","Allow","NYUMC\grp_audit","ContainerInherit, ObjectInherit","True","None"
