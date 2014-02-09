@@ -12,7 +12,9 @@ function TraverseFolders($folder, $remainingDepth) {
 }
 
 
-$RootShare = "D:\Users\John\Desktop\Winter Scripting games\Event3\Share"
+#$RootShare = "D:\Users\John\Desktop\Winter Scripting games\Event3\Share"
+$RootShare = "$PSScriptRoot\share"
+
 $FoldersInRootShare = Get-ChildItem $RootShare -Directory
 
 #Pull all files found on the root of the share, in the department folder, and in the team folders
@@ -63,5 +65,6 @@ $BadPerms = @()
 #PermissionCheck
 Foreach ($folder in $FoldersInRootShare) {
 	[Array]$PermSet = (Get-Acl $folder.FullName).Access
-	$BadPerms = $PermSet | Where-Object {($_.IdentityReference -ne "Everyone") -and (}
+	$BadPerms = $PermSet | Where-Object {($_.IdentityReference -ne "Everyone") }
+}
 	
