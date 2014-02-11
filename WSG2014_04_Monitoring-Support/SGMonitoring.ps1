@@ -1,36 +1,49 @@
-﻿Configuration SGEvent4
+﻿Configuration SGMonitoring
 {
     
-    param ( $NodeName )
+    param ( 
+        
+        [Parameter(Mandatory=$true)]
+        [string[]] $Computername,
+        
+        [string]$path,
+        [string]$Destination,
+        
+        [string]$RegKey
+        )
 
-    Node $NodeName
+    Node $Computername
     
     {
         
         Registry DRSmonitoing
         {
-            Ensure = "Present" 
+            Ensure = "present" 
             Key = "HKLM:\SOFTWARE\DRSmonitoing"
             ValueName = "Monitoring"
             ValueData = "1"
         }
 
-        File DirectoryCopy
+       # File DirectoryCopy
+       # {
+       #     Ensure = "Present" 
+       #     Type = "Directory" 
+       #     Recurse = $true 
+       #     DestinationPath = "c:\drsmonitoring"    
+       # }
+
+        File FileCopy
         {
-            Ensure = "Present" 
+            Ensure = "present" 
             Type = "file" 
            # Recurse = $true 
-            SourcePath = "C:\SG2014\DRSConfig.xml"
-            DestinationPath = "c:\drsmonitoring\DRSConfig.xml"    
+            SourcePath = "\\bamboo\SG2014\DRSConfig.xml"
+            DestinationPath = "c:\drsmonitoring\DRSConfig.xml"  
+           # DependsOn = "[File]DirectoryCopy"  
         }
 
-        #trying to use the Log to create the report
-
-        #Log AfterDirectoryCopy
-        #{
-        #    # The message below gets written to the Microsoft-Windows-Desired State Configuration/Analytic log
-        #    Message = "Finished running the file resource with ID DirectoryCopy"
-        #    DependsOn = "[File]DirectoryCopy" # This means run "DirectoryCopy" first.
-        #}
+        
     }
 }
+
+SGMonitoring -computername $computername -outputpath c:\SGDSC\monitoring
