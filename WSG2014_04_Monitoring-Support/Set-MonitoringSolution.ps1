@@ -39,20 +39,72 @@ Param
 Function New-XMLFile {
 <#
     .SYNOPSIS
-    Creates an XML config file from given CSV
+    Creates an XML (config) object from given CSV
 #>
-[CMDLETBINDING()]
-Param(
-    [Parameter(Mandatory)]
-    [PSObject]$csv
-)
+    [CMDLETBINDING()]
+    Param (
+            [Parameter(Mandatory)]
+            [PSObject]$csv
+          )
 
-## For Sunny C. to fill
+    ## For Sunny C. to fill
+    
+    ## Create XML object
+    ## Save object to XML file under C:\MonitoringFiles
 
+    ## Return the XML
+    return $configXML
 }
 #endregion Create XML
 
 
+
+workflow Copy-FileInParallel {
+  <#
+      .SYNOPSIS
+      Copy Configuration Settings file to remote computers
+      
+      .DESCRIPTION
+      Runs parallel feature of new PowerShell 3 to mass copy the file   
+      
+      .EXAMPLE
+      PS> Copy-FileInParallel -ComputerName (get-content c:\temp\hosts.txt)
+        OK hcc11medcart08
+        OK hcc12medcart02
+        OK hcc13medcart03
+        OK hcc13medcart04
+        Failed wowhcc14laptop2
+        Failed wow-t6pacu28
+        Failed wysewestest09
+        Failed wowhjd9slaptop1
+        
+        Script gets the list of machines and copies a file to all of them in parallel. 
+
+      .PARAMETER ComputerName
+      An array of hostnames
+  #>
+  [cmdletbinding()]  
+  param(
+
+    [Parameter(Mandatory=$true)]
+    [string[]]$ComputerName,
+
+    [string]$ConfigFile
+
+  )
+  
+          foreach -parallel ($computer in $ComputerName) {
+            try   { 
+                    Copy-Item -path $ConfigFile -destination "\\$computer\c$\drsmonitoring\" -Force; 
+                    Write-Verbose "OK $computer"   
+                  } 
+            catch { 
+                    Write-Verbose "Failed $computer" 
+                  }
+
+        }
+  
+}
 
 #endregion Functions
 
@@ -60,6 +112,7 @@ Param(
 #region Main_Script
 
 $ScriptName =$MyInvocation.MyCommand.Name
+$LocalConfigStore = "C:\MonitoringFiles"
 
 $log = {
     param([string]$msg)       
@@ -67,8 +120,23 @@ $log = {
 }
 
 if ($InputFile) {
+
+    &$log 'A CSV config file was supplied, importing: $InputFile'
     $csvFile = Import-Csv $InputFile
-    New-XMLFile -csv $csvFile
+
+    if (!test-path $LocalConfigStore) {
+        
+        &$log 'Creating $LocalConfigStore'
+        $null = New-Item -ItemType File -Path $LocalConfigStore        
+
+    }
+
+    &$log 'Converting CSV input into XML'
+    $configXML = New-XMLFile -csv $csvFile
+
+
+    &$log "Copying Config file will overwrite if there is already one there"
+    Copy-FileInParallel -ComputerName $csvfile.server -ConfigFile $configXML
 }
 #end region
 
