@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DRSmonitoring xmlns="http://schemas.drsmonitoring.org/metadata/2013/11">
+  <Server Name="server04" IPAddress="172.16.0.28">
+  </Server>
+  <Monitoring>
+    <MonitorCPU>TRUE</MonitorCPU>
+    <MonitorRAM>TRUE</MonitorRAM>
+    <MonitorDisk>
+    </MonitorDisk>
+    <MonitorNetwork>FALSE</MonitorNetwork>
+  </Monitoring>
+</DRSmonitoring>
