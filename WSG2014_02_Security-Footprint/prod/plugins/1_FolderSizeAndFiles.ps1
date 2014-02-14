@@ -3,14 +3,14 @@ $TblHeader =  "FolderSize on $env:ComputerName "
 
 $outputObj = "" | Select Directory, Size, Count
 #GET
-Get-ChildItem -Path C:\ -Directory | foreach {
-    $prop = Get-ChildItem $_.FullName -Recurse -ErrorAction SilentlyContinue | Measure-Object -property length -sum -ErrorAction SilentlyContinue
-    
+Get-ChildItem | where {$_.PsIsContianer -eq $True}| foreach {
+    Get-ChildItem $_.FullName -Recurse -ErrorAction SilentlyContinue | Measure-Object -property length -sum -ErrorAction SilentlyContinue
+}
+
     $outputObj.Directory = $_.FullName
     $outputObj.size = [Math]::Round($prop.Sum /1mb,2)
     $outputObj.Count= $prop.Count
-
-    Write-Output $outputobj | Export-Csv -NoTypeInformation $pwd\FolderSize.csv -Append
+    Write-Output $outputobj 
 }
 
 #WRITE
