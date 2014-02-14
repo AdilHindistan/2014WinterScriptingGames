@@ -60,25 +60,10 @@ Function New-XMLFile {
 
 
 workflow Copy-FileInParallel {
-  <#
-      .SYNOPSIS
-      Copy Configuration Settings file to remote computers
-      
+  <#           
       .DESCRIPTION
       Runs parallel feature of new PowerShell 3 to mass copy the file   
-      
-      .EXAMPLE
-      PS> Copy-FileInParallel -ComputerName (get-content c:\temp\hosts.txt)
-        OK hcc11medcart08
-        OK hcc12medcart02
-        OK hcc13medcart03
-        OK hcc13medcart04
-        Failed wowhcc14laptop2
-        Failed wow-t6pacu28
-        Failed wysewestest09
-        Failed wowhjd9slaptop1
-        
-        Script gets the list of machines and copies a file to all of them in parallel. 
+       Script gets the list of machines and copies a file to all of them in parallel. 
 
       .PARAMETER ComputerName
       An array of hostnames

@@ -39,12 +39,11 @@ $csv = Import-Csv $InputFile
 
 Function Create-DRSMonitoringFile {
 
-#Include TestPath and input validation
 param($csvfile)
 
 Begin {
     $csv = Import-Csv $csvfile
-    $xmlpath = 'C:\github\PhillyPosh\WSG2014_04_Monitoring-Support\drsconfig.xml'
+    $xmlpath = "$pwd\drsconfig.xml"
     $xmldata = New-Object XML
     $xmldata.Load($xmlpath)
     }
@@ -119,39 +118,37 @@ process {
     } #end of Process Block
 } #End of Function Create-Path
 
-Workflow Copy-FileInParallel {
-  [cmdletbinding()]  
-  param(
+Function Copy-DRSFile{
+param(
     [Parameter(Mandatory=$true)]
-    [string[]]$ComputerName,
+    [string]$ComputerName,
     [string]$ConfigFile
     )
-        foreach -parallel ($computer in $ComputerName) {
-            try   { 
-                    Create-Path $computer $server.server
-                    #copy XML to c:\drsmonitoring
-                    if(Test-path "$pwd\$server.server-DRSMonitoring.xml") {
-                        copy "$pwd\$server.server-DRSMonitoring.xml" \\$server.server\c$\DRSMonitoring\$server.server-DRSMonitoring.xml
-                        }
-                    } 
-            catch { 
-                    Write-Verbose "Failed $computer" 
-                  }
-        }
+    
+    try{ 
+        #copy XML to c:\drsmonitoring
+        if(Test-path "$pwd\$server.server-DRSMonitoring.xml") {
+            copy "$pwd\$server.server-DRSMonitoring.xml" \\$server.server\c$\DRSMonitoring\$server.server-DRSMonitoring.xml
+            }
+        } 
+    catch { 
+            Write-Verbose "Failed copying file to $computer" 
+            }
 }
 #endregion
 
 #MAIN
 
 #1. Create XML File
-Create-DRSMonitoringFile
+Create-DRSMonitoringFile -csvfile $InputFile
 
-#2. Copy File in Parallel
-Copy-FileInParallel
-#3. Set Registry Value
 $obj = "" | Select ServerName,RegistyExistButIncorrect,RegistryExistAndCorrect,RegistryDoesNotExist
 
 foreach ($server in $csv) {
+    #2. Copy File in Parallel
+    Create-Path -Computer $server.server
+        Copy-FileInParallel
+    
     $regValue = Get-RegistryHive -computer $server.server
     
     switch ($regValue) {
