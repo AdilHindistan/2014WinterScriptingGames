@@ -8,20 +8,10 @@
 .EXAMPLE
    
 .PARAMETER
-InputFile
+   InputFile
 
-.INPUTS
-   Inputs to this cmdlet (if any)
 .OUTPUTS
    Output from this cmdlet (if any)
-.NOTES
-   General notes
-.COMPONENT
-   The component this cmdlet belongs to
-.ROLE
-   The role this cmdlet belongs to
-.FUNCTIONALITY
-   The functionality that best describes this cmdlet
 #>
 [CmdletBinding(SupportsShouldProcess)]
 Param
@@ -94,47 +84,12 @@ Function ConvertFrom-CSVToXMLMonitoringFile {
         }
 } #End of Function Create-DRSMonitoringFile
 
-Function Get-RegistryHive {
-param(
-$computer,
-$hive = 'SOFTWARE\DRSMonitoring'
-)
-    $objReg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $computer)
-    if($objReg.openSubKey($hive,$true)) {
-        $objRegKey = $objReg.openSubKey($hive,$true)
-        $monitoringValue = $objRegkey.Getvalue('Monitoring')
-        Write-output $monitoringValue 
-        }
-    else {
-        Write-output "DRSMonitoringKEy does not exist"
-    }
-} #End of Function Get-RegistryHive
-
-Function Set-RegistryHive {
-param(
-$computer,
-$hive = 'SOFTWARE\DRSMonitoring',
-$regvalue = 1
-)
-    try {
-        $objReg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $computer)
-        $objRegKey = $objReg.openSubKey($hive,$true)
-        $monitoringValue = $objRegkey.Setvalue('Monitoring',$regvalue,'String')
-        }
-    catch [Exception] {
-        "REGISTRY ADD: $computer $_.Exception.Message"
-        }
-} #End of Function Set-RegistryHive
-
 Function Copy-ConfigFileToServer {
 <#
     .SYNOPSIS
-    Copies Monitoring Config file to servers
-
-    .DESCRIPTION
     Copies monitoring config xml file from local storage to each server to be monitored
     
-    .NOTES
+    .DESCRIPTION
     Creates a folder on server to store config file if it does not exist. When trying to access the remote server, it will try name first
     but if that fails, it will try the IP address as well to account for WINS/DNS issues.    
 #>    
@@ -207,50 +162,12 @@ Function Copy-ConfigFileToServer {
                         
      }   
     }    
-}
+} #End of Function Copy-ConfigFileToServer
 
-
-function Set-RegistryKey {
+Function Set-RegistryKey {
 <#
     .SYNOPSIS
-    Creates registry key and reports on results
-    
-    .DESCRIPTION
     Creates Registry keys and reports on the status of given reg key/value. Defaults are set as mentioned in the DR. Scripto requirements for brevity.
-
-    .INPUT 
-    An array of Computer Names
-
-    .EXAMPLE 
-    When run with the defaults Set-RegistryKey -ComputerName  adil-790-1,adil-w7x32vm2,adil-w7x32vm1,adil-w7x64vm1
-    
-        ComputerName   : ADIL-790-1
-        KeyExisted     : True
-        KeyCorrect     : True
-        KeyCreated     : False
-        PSComputerName : adil-790-1
-        RunspaceId     : 28ff10a2-7ee4-4cff-9f22-8db2aa9ad02e
-
-        ComputerName   : ADIL-W7X32VM2
-        KeyExisted     : True
-        KeyCorrect     : True
-        KeyCreated     : False
-        PSComputerName : adil-w7x32vm2
-        RunspaceId     : ab808f58-9e42-400c-981c-755efd97b623
-
-        ComputerName   : ADIL-W7X32VM1
-        KeyExisted     : True
-        KeyCorrect     : True
-        KeyCreated     : False
-        PSComputerName : adil-w7x32vm1
-        RunspaceId     : f532e511-7432-4991-9785-d99021ad05d4
-
-        ComputerName   : ADIL-W7X64VM1
-        KeyExisted     : True
-        KeyCorrect     : True
-        KeyCreated     : False
-        PSComputerName : adil-w7x64vm1
-        RunspaceId     : fbeef086-1e14-4cb5-b84b-2b02614d7188
 
     .OUTPUT
     PSCustomObject 
@@ -316,21 +233,17 @@ function Set-RegistryKey {
         }
     &$log "Branching out to servers to check registry keys and create/correct them if necessary"
     Invoke-Command -ComputerName $ComputerName -ScriptBlock $ScriptBlock -ArgumentList ($path, $key, $value, $type)
-}
+} #End of Function Set-RegistryKey
 
 #endregion
 
 ###  MAIN SCRIPT ###
 
-#region print verbose messages from anywhere with time and calling function/script name
 $msgSource = $MyInvocation.MyCommand.Name
 $log = {
-
     param([string]$msg)              
     Write-Verbose "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${msgsource}: $msg"    
-
 }
-#endregion
 
 #region process csv monitoring input file 
 if ($InputFile) {
@@ -348,7 +261,6 @@ if ($InputFile) {
     $RegResult = Set-RegistryKey -ComputerName ($servers.server)
     $Fragments += $RegResult |ConvertTo-Html -Property ComputerName,KeyExisted,KeyCorrect,KeyCreated -as Table -PreContent "<H2>Registry</H2>" -Fragment |out-string
 
-
     $head=@'
     <style>
         body { background-color:#dddddd;
@@ -363,58 +275,9 @@ if ($InputFile) {
         </style>
 '@
 
-
     $saveHTMLfile = "MonitoringSetupReport_$(get-date -Format "yyyyMMdd.HHmm").html"  
     
     &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
     ConvertTo-Html -Head $head -PostContent $Fragments -Title "Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')" -Body "<H1>Monitoring Setup Report<h1>" |out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
 }
 #endregion
-
-
-
-
-
-$obj = "" | Select ServerName,RegistyExistButIncorrect,RegistryExistAndCorrect,RegistryDoesNotExist
-
-foreach ($server in $csv) {
-    #2. Copy File in Parallel
-    Create-Path -Computer $server.server
-        Copy-FileInParallel
-    
-    $regValue = Get-RegistryHive -computer $server.server
-    
-    switch ($regValue) {
-    "$null" {
-            Write-Verbose "DRSMonitoring key does not exist on $server.server"
-            Set-RegistryHive
-            $obj.ServerName = $server.Server
-            $obj.RegistryDoesNotExist = "TRUE"
-            $obj | Export-CSV -notypeinformation $pwd\RegKeyNumerics.csv -append
-            }
-    "1" {
-         Write-Verbose "DRSMonitoring key does not exist on $server.server"
-         $obj.ServerName = $server.Server
-         $obj.RegistryExistAndCorrect = "TRUE"
-         $obj | Export-CSV -notypeinformation $pwd\RegKeyNumerics.csv -append
-         }
-    default {
-            Write-Verbose "DRSMonitoring key exists, but is incorrect on $server.server"
-            Set-RegistryHive
-            $obj.ServerName = $server.Server
-            $obj.RegistyExistButIncorrect = "TRUE"
-            $obj | Export-CSV -notypeinformation $pwd\RegKeyNumerics.csv -append
-            }
-
-        } # End of Switch
-
-    } # End of Foreach
-
-<#
-TODO:
-Log all actions into an object.
-Log create CMD into an object
-Log DRSMonitoringKey Creation into an object
-HTML Output report
-Compare-Object $pwd\server01-drsconfig.xml \\$server01\c$\server01-drsconfig.xml
-#>
