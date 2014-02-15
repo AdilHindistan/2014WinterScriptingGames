@@ -20,7 +20,7 @@ Param
     [Parameter(HelpMessage="Enter full path to the config csv file")]
     [ValidateNotNullOrEmpty()]
     [ValidateScript({(test-path $_) -and ((get-item $_).extension -eq '.csv')})]    
-    [string]$InputFile=".\servers.csv"
+    [string]$InputFile
     
 )
 
@@ -57,7 +57,7 @@ Function ConvertFrom-CSVToXMLMonitoringFile {
                     }
                 catch {
                         &$log "Failed to create local storage. Script will exit. $_"
-                        exit 1   
+                        #exit 1   
                 }
             }
 
@@ -78,7 +78,7 @@ Function ConvertFrom-CSVToXMLMonitoringFile {
                         }
                     catch {
                             Write-Error "Failed trying to save config file to c:\MonitoringFiles. Script will exit. $_"
-                            exit 1                              
+                            #exit 1                              
                     }
              }
         }
