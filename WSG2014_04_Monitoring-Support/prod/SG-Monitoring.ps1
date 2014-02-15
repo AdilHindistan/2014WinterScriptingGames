@@ -21,7 +21,10 @@ Param
     [Parameter(HelpMessage="Enter full path to the config csv file")]
     [ValidateNotNullOrEmpty()]
     [ValidateScript({(test-path $_) -and ((get-item $_).extension -eq '.csv')})]    
-    [string]$InputFile
+    [string]$InputFile,
+
+    # Switch to compare local configuration file to remote server configuration
+    [switch]$CompareConfiguration
 )
 
 #region Helper Functions
@@ -221,13 +224,41 @@ Function Set-RegistryKey {
     Invoke-Command -ComputerName $ComputerName -ScriptBlock $ScriptBlock -ArgumentList ($path, $key, $value, $type)
 } #End of Function Set-RegistryKey
 
-Function Compare-Configuration {
-$localXML = Get-ChildItem C:\MonitoringFiles\*.xml
-foreach ($item in $localXML) {
-    $name= $item.name -replace "(^.*)-DRSMonitoring.xml"
-    Compare-Object $item \\$name\c$\DRSMonitoring\*.xml
-    }
+Function Compare-ConfigFile {
+   foreach ($item in (Get-ChildItem C:\MonitoringFiles\*.xml)) 
+        {        
+        
+            $serverName = $item.name -replace "^(.*)-DRSMonitoring.xml",'$1'
+        
+            &$log "Processing $ServerName"
+
+            if (Test-Path \\$serverName\c$\DRSMonitoring\$servername-DRSMonitoring.xml) 
+            {
+            
+                &$log "Remote Server has a config file"
+
+                if (Compare-Object (Get-Content $item) (Get-Content \\$serverName\c$\DRSMonitoring\$servername-DRSMonitoring.xml) -PassThru) 
+                {
+                    &$log "Server $serverName has config mismatch"             
+                    [PSCustomObject]@{ComputerName=$serverName;ConfigChanged=$true}
+
+                } 
+                else 
+                {
+                    &$log "Server $serverName is OK" 
+                    [PSCustomObject]@{ComputerName=$serverName;ConfigChanged=$false}
+                }
+
+            } 
+            else 
+            {                
+                &$log "Server $serverName is not accessible or has no config file"
+                [PSCustomObject]@{ComputerName=$serverName;ConfigChanged='N/A'}
+            }
+        }
+
 }
+
 #endregion
 
 ###  MAIN SCRIPT ###
@@ -238,9 +269,25 @@ $log = {
     Write-Verbose "$(Get-Date -Format 'yyyyMMdd_HHmmss') ${msgsource}: $msg"    
 }
 
+$head=@'
+<style>
+    body { background-color:#dddddd;
+            font-family:Tahoma;
+            font-size:12pt; }
+    td, th { border:1px solid black; 
+                border-collapse:collapse; }
+    th { color:white;
+            background-color:black; }
+    table, tr, td, th { padding: 2px; margin: 0px }
+    table { margin-left:50px; }
+</style>
+'@
+
+
+
 #region process csv monitoring input file 
 if ($InputFile) {
-    $Fragments=@()
+    
     $servers = import-csv $InputFile
     
     &$log 'Calling function to create Monitoring Config XML file from supplied CSV for each server'
@@ -252,37 +299,21 @@ if ($InputFile) {
     &$log 'Calling function to copy local config XML files to remote servers'
     $PhillyPoshObject = $RegResult |select-object ComputerName,KeyExisted,KeyCorrect,KeyCreated,@{l="MonitoringFileInstalled";e={$CopyResult[$($_.ComputerName)]}}
     
-    $head=@'
-    <style>
-        body { background-color:#dddddd;
-               font-family:Tahoma;
-               font-size:12pt; }
-        td, th { border:1px solid black; 
-                 border-collapse:collapse; }
-        th { color:white;
-             background-color:black; }
-        table, tr, td, th { padding: 2px; margin: 0px }
-        table { margin-left:50px; }
-        </style>
-'@
 
     $saveHTMLfile = "MonitoringSetupReport_$(get-date -Format "yyyyMMdd.HHmm").html"  
-<<<<<<< HEAD
-    
-	If ($BadEntries) {
-		$BadEntries | Foreach-object {$_.BadEntryReason = $_.BadEntryReason -replace "`n",". "}
-		$Fragments += $BadEntries | ConvertTo-Html -as Table -PreContent "<H3>Bad CSV Entries</H3>" -Fragment |out-string
-	}
-	
-    &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
-    $myMonitoringObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "<H2>Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')<h1>"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
-    $myMonitoringObject
-    Compare-Configuration
-=======
 	
     &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
     $PhillyPoshObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
+    Invoke-Item $PSScriptRoot\$saveHTMLfile
     $PhillyPoshObject
->>>>>>> ec02bdfeea9e0c69252e0fa744d245f33d88261f
+
 }
 #endregion
+
+If ($CompareConfiguration) {    
+   
+   $saveHTMLfile = "ConfigCompareReport_$(get-date -Format "yyyyMMdd.HHmm").html"  
+   &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
+   Compare-ConfigFile | ConvertTo-Html -Head $head -as Table -Title "Compare Configuration Report" -Body "Configuration Comparison Report as of $(get-date -Format 'yyyyMMdd.HHmm')"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
+   Invoke-Item $PSScriptRoot\$saveHTMLfile
+}
