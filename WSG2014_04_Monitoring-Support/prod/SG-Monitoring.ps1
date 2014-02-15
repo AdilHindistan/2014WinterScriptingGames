@@ -240,7 +240,6 @@ if ($InputFile) {
     $Fragments=@()
     $servers = import-csv $InputFile
 	
-	$BadEntries = Validate-CSVFile -CSV $servers
 	If ($BadEntries) {
 		$servers = $servers | Where-Object {$_.Server -notin $BadEntryList.Server}
 	}
