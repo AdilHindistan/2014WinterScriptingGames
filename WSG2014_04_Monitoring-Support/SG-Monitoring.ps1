@@ -136,12 +136,12 @@ Function Copy-ConfigFileToServer {
     
     .NOTES
     Creates a folder on server to store config file if it does not exist. When trying to access the remote server, it will try name first
-    but if that fails, it will try the IP address as well to account for WINS/DNS issues.
+    but if that fails, it will try the IP address as well to account for WINS/DNS issues.    
 #>    
     [CMDLETBINDING()]
     param(
-            # full path to the input csv file
-            [PSObject]$Servers
+            # An object which has at least server name and ip address
+            [PSObject]$Servers                                   
         )
     
     $msgSource = $MyInvocation.MyCommand.Name
@@ -187,7 +187,7 @@ Function Copy-ConfigFileToServer {
         }
 
         try { 
-              Copy-Item -Path C:\MonitoringFiles\$($server.server)-*.xml -Destination \\$remote\c$\DRSMonitoring -ErrorAction Stop |out-null
+              Copy-Item -Path $localStorage\$($server.server)-DRSMonitoring.xml -Destination \\$remote\c$\DRSMonitoring -ErrorAction Stop |out-null
               &$log "Successfully copied the monitoring file to $($server.server)"
         }
         catch {
@@ -197,13 +197,73 @@ Function Copy-ConfigFileToServer {
     }    
 }
 
+
+function Set-RegistryKey {
+    [CmdletBinding()]
+    param ( 
+            [Parameter(HelpMessage='One or more computer name')]
+            [ValidateNotNullOrEmpty()]
+            [string[]]$ComputerName,
+
+            [Parameter(HelpMessage='Registry Path in the form of HKLM:\SOFTWARE')]
+            [string]$path='HKLM:\SOFTWARE\DRSMONITORING',
+
+            [Parameter(HelpMessage='Registry key')]
+            [string]$key='Monitoring',
+
+            [string]$value='1',
+
+            [string]$type="DWORD"
+    )
+    
+        $msgSource = $MyInvocation.MyCommand.Name
+        
+        $ScriptBlock = {
+            param($path,$key,$value,$type)
+
+            $KeyExisted = $KeyCreated = $KeyCorrect = $false
+
+                        if (test-path $path) 
+                        { 
+                            $KeyExisted = $true
+                            
+                            $value=(Get-ItemProperty -path $path).$key
+                            if ($value -eq 1) {                                
+                                $KeyCorrect = $true
+                            }
+
+
+                        } else {
+                      
+                            Write-Verbose "Registry key does not exist. Creating!"
+                            $KeyCreated = $true
+                            New-Item -path $path -force | out-null
+                        }
+                        
+                      try 
+                      {                 
+                            Set-ItemProperty -path $path -name $key -Type $type -Value $Value -force            
+                      }
+                      catch 
+                      {
+                            write-error "An error occured.$Error[$error.count-1].exception" 
+                            exit 1
+                      }
+
+                    [PSCustomObject]@{                                        
+                                        KeyExisted   = $KeyExisted;
+                                        KeyCorrect   = $KeyCorrect;
+                                        KeyCreated   = $KeyCreated;
+                    }
+
+        }
+    
+    Invoke-Command -ComputerName $ComputerName -ScriptBlock $ScriptBlock -ArgumentList ($path, $key, $value, $type)
+}
+
 #endregion
 
 ###  MAIN SCRIPT ###
-
-#1. Create XML File
-
-## $csvFile = Import-Csv $InputFile
 
 #region print verbose messages from anywhere with time and calling function/script name
 $msgSource = $MyInvocation.MyCommand.Name
@@ -215,7 +275,9 @@ $log = {
 }
 #endregion
 
+#region process csv monitoring input file 
 if ($InputFile) {
+    $Fragments=@()
     $servers = import-csv $InputFile
     
     &$log 'Calling function to create Monitoring Config XML file from supplied CSV for each server'
@@ -223,9 +285,36 @@ if ($InputFile) {
     
     &$log 'Calling function to copy local config XML files to remote servers'
     Copy-ConfigFileToServer -Servers $servers
-}
 
-exit
+    &$log 'Setting Registry Key for monitoring on each server'
+    $RegResult = Set-RegistryKey -ComputerName ($servers.server)
+    $Fragments += $RegResult |ConvertTo-Html -Property PSComputerName,KeyExisted,KeyCorrect,KeyCreated -as Table -PreContent "<H2>Monitoring Registry</H2>" -Fragment |out-string
+
+
+    $head=@'
+    <style>
+        body { background-color:#dddddd;
+               font-family:Tahoma;
+               font-size:12pt; }
+        td, th { border:1px solid black; 
+                 border-collapse:collapse; }
+        th { color:white;
+             background-color:black; }
+        table, tr, td, th { padding: 2px; margin: 0px }
+        table { margin-left:50px; }
+        </style>
+'@
+
+
+    $saveHTMLfile = "$(get-date -Format "yyyyMMdd.hhmm")_MonitoringSetupReport.html"  
+    &$log "Saving Monitoring Setup Report to $saveHTMLfile"
+    ConvertTo-Html -Head $head -PostContent $Fragments -Title "Monitoring Setup Report" -Body "<H1>Monitoring Setup Report<h1>" |out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
+}
+#endregion
+
+
+
+
 
 $obj = "" | Select ServerName,RegistyExistButIncorrect,RegistryExistAndCorrect,RegistryDoesNotExist
 
