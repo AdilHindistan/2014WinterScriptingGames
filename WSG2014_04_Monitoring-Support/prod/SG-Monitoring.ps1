@@ -1,18 +1,25 @@
 ﻿<#
 .Synopsis
-   Deploy and Report on Monitoring Solution
+   Compare and report on a Monitoring Solution
 
 .DESCRIPTION
-   Sets up Monitoring configuration and produces compliance reports
+   Sets up Monitoring configuration 
 
 .EXAMPLE
- .\SG-monitoring.ps1 -inputfile .\servers.csv -verbose
+.\SG-monitoring.ps1 -inputfile .\servers.csv -verbose
+.\SG-monitoring.ps1 -CompareConfiguration -verbose
 
 .PARAMETER InputFile
+Given input file in CSV
+
+.PARAMETER SWITCH CompareConfiguration
+Compares configuration of existing c:\MonitoringFiles with remote XML on c:\DRSMonitoring 
 
 .OUTPUTS
-  Outputs report of presence of c:\DRSMonitoring as a HTML
-
+ Outputs a report of comparison of Registry and FileData as a HTML
+ Outputs a CSV file of comparison.
+ Compares Configuration and report difference as HTML
+ 
 #>
 [CmdletBinding(SupportsShouldProcess)]
 Param
@@ -305,7 +312,7 @@ if ($InputFile) {
     &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
     $PhillyPoshObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
     Invoke-Item $PSScriptRoot\$saveHTMLfile
-    $PhillyPoshObject
+    $PhillyPoshObject | export-csv -NoTypeInformation $pwd\PhillyPoshMonitoringConfig.csv
 
 }
 #endregion
