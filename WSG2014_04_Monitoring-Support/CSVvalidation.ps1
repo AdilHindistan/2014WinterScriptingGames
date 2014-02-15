@@ -9,9 +9,7 @@ $VerfiyTable = @{
 $BadEntryList = @()
 
 Write-Verbose "INFO : Pulling in the current calendar list"
-Try {
-       $ServerList = Import-Csv "D:\Users\John\Documents\GitHub\PhillyPosh\WSG2014_04_Monitoring-Support\test\servers_badentries.csv" -ErrorAction Stop
-}
+Try {$ServerList = Import-Csv "D:\Users\John\Documents\GitHub\PhillyPosh\WSG2014_04_Monitoring-Support\test\servers_badentries.csv" -ErrorAction Stop}
 Catch {
        Write-Warning "Cannot access CSV location"
 	   Exit 1
