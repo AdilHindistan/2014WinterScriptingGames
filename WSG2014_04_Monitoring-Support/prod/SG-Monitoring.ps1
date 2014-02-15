@@ -6,12 +6,13 @@
    Sets up Monitoring configuration and produces compliance reports
 
 .EXAMPLE
-   
-.PARAMETER
-   InputFile
+ .\SG-monitoring.ps1 -inputfile .\servers.csv -verbose
+
+.PARAMETER InputFile
 
 .OUTPUTS
-   Output from this cmdlet (if any)
+  Outputs report of presence of c:\DRSMonitoring as a HTML
+
 #>
 [CmdletBinding(SupportsShouldProcess)]
 Param
@@ -21,20 +22,14 @@ Param
     [ValidateNotNullOrEmpty()]
     [ValidateScript({(test-path $_) -and ((get-item $_).extension -eq '.csv')})]    
     [string]$InputFile
-    
 )
-
 
 #region Helper Functions
 
 Function ConvertFrom-CSVToXMLMonitoringFile {
 <#
     .SYNOPSIS
-    Convert CSV Input file path to XML File
-    
-    .DESCRIPTION
-    Takes in a CSV File path containing Server Monitoring Data, and convert it to an xml configuration file for each server
-
+    Takes a CSV File path containing Server Monitoring Data, and convert it to an xml configuration file for each server
 #>
 [CMDLETBinding()]
     param(        
@@ -71,14 +66,13 @@ Function ConvertFrom-CSVToXMLMonitoringFile {
                     $xmldata.DRSmonitoring.Monitoring.MonitorDisk=$item.Disk
                     $xmldata.DRSmonitoring.Monitoring.MonitorNetwork=$item.Network
 
-                    
                     try {
                             $xmldata.save("C:\MonitoringFiles\$($item.Server)-DRSMonitoring.xml")
                             &$log "Saved monitoring config file C:\MonitoringFiles\$($item.Server)-DRSMonitoring.xml"
                         }
                     catch {
                             Write-Error "Failed trying to save config file to c:\MonitoringFiles. Script will exit. $_"
-                            #exit 1                              
+                            exit 1                              
                     }
              }
         }
@@ -87,16 +81,12 @@ Function ConvertFrom-CSVToXMLMonitoringFile {
 Function Copy-ConfigFileToServer {
 <#
     .SYNOPSIS
-    Copies monitoring config xml file from local storage to each server to be monitored
-    
-    .DESCRIPTION
-    Creates a folder on server to store config file if it does not exist. When trying to access the remote server, it will try name first
-    but if that fails, it will try the IP address as well to account for WINS/DNS issues.    
+    Creates a folder on server to store config file if it does not exist. When trying to access the remote server, it will try NETBIOS name first
+    but and if that fails, it will try the IP address to connect to the server.    
 #>    
     [CMDLETBINDING()]
     param(
-            # An object which has at least server name and ip address
-            [PSObject]$Servers                                   
+           [PSObject]$Servers                                   
         )
     
     $msgSource = $MyInvocation.MyCommand.Name
@@ -104,7 +94,6 @@ Function Copy-ConfigFileToServer {
     $Hash=@{}
     Foreach ($server in $Servers) {
             $MonitoringFileInstalled=$false
-        
 
             if (Test-Connection $server.server -count 1 -Quiet) {
             
@@ -123,7 +112,6 @@ Function Copy-ConfigFileToServer {
             
                     Write-Error  "$($server.server) is not accessible by name or IP. Exiting Script!"                
                     exit 1
-            
                 }
             
             }
@@ -156,12 +144,11 @@ Function Copy-ConfigFileToServer {
                   exit 1
            } 
 
-        $Hash[$($server.server)]=$MonitoringFileInstalled
+       $Hash[$($server.server)]=$MonitoringFileInstalled
 #      [PSCustomObject]@{                                        
 #                        ComputerName = $($server.server);
                         #MonitoringFileInstalled = $MonitoringFileInstalled
-                        
-     #}        
+                        #}        
     }    
 
     $Hash
@@ -208,8 +195,7 @@ Function Set-RegistryKey {
                             if ($value -eq 1) {                                
                                 $KeyCorrect = $true
                             }
-
-
+                        
                         } else {
                       
                             Write-Verbose "Registry key does not exist. Creating!"
@@ -238,71 +224,6 @@ Function Set-RegistryKey {
     &$log "Branching out to servers to check registry keys and create/correct them if necessary"
     Invoke-Command -ComputerName $ComputerName -ScriptBlock $ScriptBlock -ArgumentList ($path, $key, $value, $type)
 } #End of Function Set-RegistryKey
-
-#region Validate CSV file
-Function Validate-CSVFile {
-<#
-    .SYNOPSIS
-    Validates CSV entries for
-		Duplicate Server names
-		Duplicate IPS
-		Bad Server names that don’t match DNS name standards
-		Malformed IP address
-		Settings that aren’t True, False, or Blank
-	If found returns a list of bad entries with all the reasons why they were bad
-#>
-
-    [CMDLETBINDING()]
-    Param (
-            [Parameter(Mandatory)]
-            [PSObject]$CSV
-          )
-
-	#Used to verfy True/False entries
-	$VerfiyTable = @{
-	       "True" = "TRUE"
-	       "False" = "FALSE"
-	       "" = ""
-	}
-
-	#Used to hold any bad entires found with a description of why they were bad
-	$BadEntryList = @()
-
-	#Create list of IP's and Servers to test for dupes
-	#Not sure if there a cost time wise to using the Automatic foreach in a loop, just to be safe we are going to do it once
-	$FullIPList = $CSV.IP
-	$FullServerlist = $CSV.server
-
-	Write-Verbose "ACTION : Verifying server list entries"
-	ForEach ($entry in $CSV) {
-		$BadEntryReason = ""
-	    #Verify that no duplicates server names or IPs exist
-		If (($FullServerlist -match $entry.Server).count -gt 1) {$BadEntryReason += "Duplicate server name in list`n"}
-		If (($FullIPList -match $entry.IP).count -gt 1) {$BadEntryReason += "Duplicate IP in list`n"}
-		#Verify that server name is a proper DNS name
-	    If ($entry.server -notmatch "^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$") {$BadEntryReason += "Server name is not a proper DNS name`n"}
-		#Verify that IP is a proper IP address
-	    If ($entry.IP -notmatch "^([1-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])){3}$") {$BadEntryReason += "IP address is malformed`n"}
-		#grab all remaining properties
-		$TrueFalseProps = $entry | 
-							Get-Member -MemberType NoteProperty | 
-							Where-Object {($_.Name -ne "Server") -and ($_.Name -ne "IP")} |
-							ForEach-Object {$_.name}
-		#Verify that they are either true/false or blank
-		$TrueFalseProps | ForEach-Object {
-			If (-not ($VerfiyTable.containsKey($entry.$_))) {$BadEntryReason += "Setting $_ is not True, False, Or blank`n"}
-		}
-		#If one or more bad entries are found add the reason to the entry and the bad entry list
-		If ($BadEntryReason) {$BadEntryList += ($entry | Add-Member -MemberType NoteProperty -Name "BadEntryReason" -Value $BadEntryReason -PassThru)}
-	}
-	 
-	If ($BadEntryList) {
-	       Write-Verbose "INFO : Bad Entries found, returning"
-		   $BadEntryList
-	}
-	Else {Write-Verbose "INFO : CSV file contains no errors"}
-}
-#EndRegion 
 
 #endregion
 
@@ -355,6 +276,6 @@ if ($InputFile) {
 	
     &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
     $myMonitoringObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "<H1>Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')<h1>"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
-   
+    $myMonitoringObject
 }
 #endregion
