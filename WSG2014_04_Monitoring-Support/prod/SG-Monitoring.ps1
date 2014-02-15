@@ -270,7 +270,7 @@ if ($InputFile) {
     $saveHTMLfile = "MonitoringSetupReport_$(get-date -Format "yyyyMMdd.HHmm").html"  
     
 	If ($BadEntries) {
-		$BadEntries | Foreach-object {$_.BadEntryReason = $_.BadEntryReason -replace "`n","<BR>"}
+		$BadEntries | Foreach-object {$_.BadEntryReason = $_.BadEntryReason -replace "`n",". "}
 		$Fragments += $BadEntries | ConvertTo-Html -as Table -PreContent "<H2>Bad CSV Entries</H2>" -Fragment |out-string
 	}
 	
