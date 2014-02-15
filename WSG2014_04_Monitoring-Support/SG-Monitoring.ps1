@@ -148,6 +148,7 @@ Function Copy-ConfigFileToServer {
     $localStorage  = 'C:\MonitoringFiles'
     
     Foreach ($server in $Servers) {
+        $MonitoringFileInstalled=$false
         
 
         if (Test-Connection $server.server -count 1 -Quiet) {
@@ -187,18 +188,73 @@ Function Copy-ConfigFileToServer {
         }
 
         try { 
-              Copy-Item -Path $localStorage\$($server.server)-DRSMonitoring.xml -Destination \\$remote\c$\DRSMonitoring -ErrorAction Stop |out-null
+              if (test-path \\$remote\c$\DRSMonitoring\$($server.server)-DRSMonitoring.xml) {
+                
+                &$log "Monitoring config file already exists on the target. Overriding"
+                $MonitoringFileInstalled = $true
+              }
+              Copy-Item -Path $localStorage\$($server.server)-DRSMonitoring.xml -Destination \\$remote\c$\DRSMonitoring -ErrorAction Stop -Force |out-null
               &$log "Successfully copied the monitoring file to $($server.server)"
         }
         catch {
               Write-Error "Failed to copy monitoring file to $($server.server). Exiting Script!"
               exit 1
-       }    
+       } 
+
+      [PSCustomObject]@{                                        
+                        ComputerName = $($server.server);
+                        MonitoringFileInstalled = $MonitoringFileInstalled
+                        
+     }   
     }    
 }
 
 
 function Set-RegistryKey {
+<#
+    .SYNOPSIS
+    Creates registry key and reports on results
+    
+    .DESCRIPTION
+    Creates Registry keys and reports on the status of given reg key/value. Defaults are set as mentioned in the DR. Scripto requirements for brevity.
+
+    .INPUT 
+    An array of Computer Names
+
+    .EXAMPLE 
+    When run with the defaults Set-RegistryKey -ComputerName  adil-790-1,adil-w7x32vm2,adil-w7x32vm1,adil-w7x64vm1
+    
+        ComputerName   : ADIL-790-1
+        KeyExisted     : True
+        KeyCorrect     : True
+        KeyCreated     : False
+        PSComputerName : adil-790-1
+        RunspaceId     : 28ff10a2-7ee4-4cff-9f22-8db2aa9ad02e
+
+        ComputerName   : ADIL-W7X32VM2
+        KeyExisted     : True
+        KeyCorrect     : True
+        KeyCreated     : False
+        PSComputerName : adil-w7x32vm2
+        RunspaceId     : ab808f58-9e42-400c-981c-755efd97b623
+
+        ComputerName   : ADIL-W7X32VM1
+        KeyExisted     : True
+        KeyCorrect     : True
+        KeyCreated     : False
+        PSComputerName : adil-w7x32vm1
+        RunspaceId     : f532e511-7432-4991-9785-d99021ad05d4
+
+        ComputerName   : ADIL-W7X64VM1
+        KeyExisted     : True
+        KeyCorrect     : True
+        KeyCreated     : False
+        PSComputerName : adil-w7x64vm1
+        RunspaceId     : fbeef086-1e14-4cb5-b84b-2b02614d7188
+
+    .OUTPUT
+    PSCustomObject 
+#>
     [CmdletBinding()]
     param ( 
             [Parameter(HelpMessage='One or more computer name')]
@@ -251,13 +307,14 @@ function Set-RegistryKey {
                       }
 
                     [PSCustomObject]@{                                        
+                                        ComputerName = $env:COMPUTERNAME;
                                         KeyExisted   = $KeyExisted;
                                         KeyCorrect   = $KeyCorrect;
                                         KeyCreated   = $KeyCreated;
                     }
 
         }
-    
+    &$log "Branching out to servers to check registry keys and create/correct them if necessary"
     Invoke-Command -ComputerName $ComputerName -ScriptBlock $ScriptBlock -ArgumentList ($path, $key, $value, $type)
 }
 
@@ -284,11 +341,12 @@ if ($InputFile) {
     ConvertFrom-CSVToXMLMonitoringFile -Servers $servers
     
     &$log 'Calling function to copy local config XML files to remote servers'
-    Copy-ConfigFileToServer -Servers $servers
+    $CopyResults = Copy-ConfigFileToServer -Servers $servers
+    $Fragments += $CopyResults |ConvertTo-Html -Property ComputerName,MonitoringFileInstalled -as Table -PreContent "<H2>Config File</H2>" -Fragment |out-string
 
     &$log 'Setting Registry Key for monitoring on each server'
     $RegResult = Set-RegistryKey -ComputerName ($servers.server)
-    $Fragments += $RegResult |ConvertTo-Html -Property PSComputerName,KeyExisted,KeyCorrect,KeyCreated -as Table -PreContent "<H2>Monitoring Registry</H2>" -Fragment |out-string
+    $Fragments += $RegResult |ConvertTo-Html -Property ComputerName,KeyExisted,KeyCorrect,KeyCreated -as Table -PreContent "<H2>Registry</H2>" -Fragment |out-string
 
 
     $head=@'
@@ -306,9 +364,10 @@ if ($InputFile) {
 '@
 
 
-    $saveHTMLfile = "$(get-date -Format "yyyyMMdd.hhmm")_MonitoringSetupReport.html"  
-    &$log "Saving Monitoring Setup Report to $saveHTMLfile"
-    ConvertTo-Html -Head $head -PostContent $Fragments -Title "Monitoring Setup Report" -Body "<H1>Monitoring Setup Report<h1>" |out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
+    $saveHTMLfile = "MonitoringSetupReport_$(get-date -Format "yyyyMMdd.HHmm").html"  
+    
+    &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
+    ConvertTo-Html -Head $head -PostContent $Fragments -Title "Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')" -Body "<H1>Monitoring Setup Report<h1>" |out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
 }
 #endregion
 
