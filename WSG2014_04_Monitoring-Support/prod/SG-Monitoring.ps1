@@ -347,6 +347,11 @@ if ($InputFile) {
 
     $saveHTMLfile = "MonitoringSetupReport_$(get-date -Format "yyyyMMdd.HHmm").html"  
     
+	If ($BadEntries) {
+		$BadEntries | Foreach-object {$_.BadEntryReason = $_.BadEntryReason -replace "`n","<BR>"}
+		$Fragments += $BadEntries | ConvertTo-Html -as Table -PreContent "<H2>Bad CSV Entries</H2>" -Fragment |out-string
+	}
+	
     &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
     ConvertTo-Html -Head $head -PostContent $Fragments -Title "Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')" -Body "<H1>Monitoring Setup Report<h1>" |out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
 }
