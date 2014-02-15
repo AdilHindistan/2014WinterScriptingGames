@@ -235,10 +235,6 @@ $log = {
 if ($InputFile) {
     $Fragments=@()
     $servers = import-csv $InputFile
-	
-	If ($BadEntries) {
-		$servers = $servers | Where-Object {$_.Server -notin $BadEntryList.Server}
-	}
     
     &$log 'Calling function to create Monitoring Config XML file from supplied CSV for each server'
     ConvertFrom-CSVToXMLMonitoringFile -Servers $servers
@@ -264,11 +260,6 @@ if ($InputFile) {
 '@
 
     $saveHTMLfile = "MonitoringSetupReport_$(get-date -Format "yyyyMMdd.HHmm").html"  
-    
-	If ($BadEntries) {
-		$BadEntries | Foreach-object {$_.BadEntryReason = $_.BadEntryReason -replace "`n",". "}
-		$Fragments += $BadEntries | ConvertTo-Html -as Table -PreContent "<H2>Bad CSV Entries</H2>" -Fragment |out-string
-	}
 	
     &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
     $PhillyPoshObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
