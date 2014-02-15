@@ -225,6 +225,13 @@ Function Set-RegistryKey {
     Invoke-Command -ComputerName $ComputerName -ScriptBlock $ScriptBlock -ArgumentList ($path, $key, $value, $type)
 } #End of Function Set-RegistryKey
 
+Function Compare-Configuration {
+$localXML = Get-ChildItem C:\MonitoringFiles\*.xml
+foreach ($item in $localXML) {
+    $name= $item.name -replace "(^.*)-DRSMonitoring.xml"
+    Compare-Object $item \\$name\c$\DRSMonitoring\*.xml
+    }
+}
 #endregion
 
 ###  MAIN SCRIPT ###
@@ -270,11 +277,12 @@ if ($InputFile) {
     
 	If ($BadEntries) {
 		$BadEntries | Foreach-object {$_.BadEntryReason = $_.BadEntryReason -replace "`n",". "}
-		$Fragments += $BadEntries | ConvertTo-Html -as Table -PreContent "<H2>Bad CSV Entries</H2>" -Fragment |out-string
+		$Fragments += $BadEntries | ConvertTo-Html -as Table -PreContent "<H3>Bad CSV Entries</H3>" -Fragment |out-string
 	}
 	
     &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
-    $myMonitoringObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "<H1>Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')<h1>"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
+    $myMonitoringObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "<H2>Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')<h1>"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
     $myMonitoringObject
+    Compare-Configuration
 }
 #endregion
