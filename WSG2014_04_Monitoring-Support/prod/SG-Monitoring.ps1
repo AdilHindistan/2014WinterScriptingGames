@@ -145,10 +145,6 @@ Function Copy-ConfigFileToServer {
            } 
 
        $Hash[$($server.server)]=$MonitoringFileInstalled
-#      [PSCustomObject]@{                                        
-#                        ComputerName = $($server.server);
-                        #MonitoringFileInstalled = $MonitoringFileInstalled
-                        #}        
     }    
 
     $Hash
@@ -249,8 +245,9 @@ if ($InputFile) {
     
     &$log 'Calling function to copy local config XML files to remote servers'
     $CopyResult = Copy-ConfigFileToServer -Servers $servers
-
-    $myMonitoringObject = $RegResult |select-object ComputerName,KeyExisted,KeyCorrect,KeyCreated,@{l="MonitoringFileInstalled";e={$CopyResult[$($_.ComputerName)]}}
+    
+    &$log 'Calling function to copy local config XML files to remote servers'
+    $PhillyPoshObject = $RegResult |select-object ComputerName,KeyExisted,KeyCorrect,KeyCreated,@{l="MonitoringFileInstalled";e={$CopyResult[$($_.ComputerName)]}}
     
     $head=@'
     <style>
@@ -274,7 +271,7 @@ if ($InputFile) {
 	}
 	
     &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
-    $myMonitoringObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "<H1>Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')<h1>"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
-    $myMonitoringObject
+    $PhillyPoshObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
+    $PhillyPoshObject
 }
 #endregion
