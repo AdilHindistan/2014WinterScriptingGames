@@ -251,7 +251,7 @@ Function Validate-CSVFile {
     [CMDLETBINDING()]
     Param (
             [Parameter(Mandatory)]
-            [PSObject]$Path
+            [PSObject]$CSV
           )
 
 	#Used to verfy True/False entries
@@ -261,18 +261,16 @@ Function Validate-CSVFile {
 	       "" = ""
 	}
 
-	$ServerList = Import-Csv -Path $Path
-
 	#Used to hold any bad entires found with a description of why they were bad
 	$BadEntryList = @()
 
 	#Create list of IP's and Servers to test for dupes
 	#Not sure if there a cost time wise to using the Automatic foreach in a loop, just to be safe we are going to do it once
-	$FullIPList = $ServerList.IP
-	$FullServerlist = $ServerList.server
+	$FullIPList = $CSV.IP
+	$FullServerlist = $CSV.server
 
 	Write-Verbose "ACTION : Verifying server list entries"
-	ForEach ($entry in $ServerList) {
+	ForEach ($entry in $CSV) {
 		$BadEntryReason = ""
 	    #Verify that no duplicates server names or IPs exist
 		If (($FullServerlist -match $entry.Server).count -gt 1) {$BadEntryReason += "Duplicate server name in list`n"}
