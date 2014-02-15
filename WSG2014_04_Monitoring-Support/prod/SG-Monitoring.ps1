@@ -101,67 +101,71 @@ Function Copy-ConfigFileToServer {
     
     $msgSource = $MyInvocation.MyCommand.Name
     $localStorage  = 'C:\MonitoringFiles'
-    
+    $Hash=@{}
     Foreach ($server in $Servers) {
-        $MonitoringFileInstalled=$false
+            $MonitoringFileInstalled=$false
         
 
-        if (Test-Connection $server.server -count 1 -Quiet) {
+            if (Test-Connection $server.server -count 1 -Quiet) {
             
-            &$log "$($server.server) is accessible by name"
-            $remote = $server.server
+                &$log "$($server.server) is accessible by name"
+                $remote = $server.server
 
-        } else {
+            } else {
             
-            ## try ip before we give up
-            if (Test-Connection $server.ip -count 1 -Quiet) {
+                ## try ip before we give up
+                if (Test-Connection $server.ip -count 1 -Quiet) {
 
-                &$log "$($server.server) is NOT accessible by name but is accessible by IP"
-                $remote = $server.ip
+                    &$log "$($server.server) is NOT accessible by name but is accessible by IP"
+                    $remote = $server.ip
             
-            } else {                
+                } else {                
             
-                Write-Error  "$($server.server) is not accessible by name or IP. Exiting Script!"                
-                exit 1
+                    Write-Error  "$($server.server) is not accessible by name or IP. Exiting Script!"                
+                    exit 1
             
-            }
-            
-        }
-
-        &$log "Checking if DRSMonitoring folder exists on remote server"
-        if ( -not ( Test-Path \\$remote\c$\DRSMonitoring) ) {                               
-            
-            try {
-                    &$log  "Creating c:\DRSmonitoring folder on server $($server.server)"
-                    New-Item -Path \\$remote\c$\DRSMonitoring -ItemType Directory -ErrorAction Stop |Out-Null
                 }
-            catch {
-                    Write-Error "Failed to create DRSMonitoring folder on remote server $($server.server). Exiting script!"
-                    exit 1   
+            
             }
-                
-        }
 
-        try { 
-              if (test-path \\$remote\c$\DRSMonitoring\$($server.server)-DRSMonitoring.xml) {
+            &$log "Checking if DRSMonitoring folder exists on remote server"
+            if ( -not ( Test-Path \\$remote\c$\DRSMonitoring) ) {                               
+            
+                try {
+                        &$log  "Creating c:\DRSmonitoring folder on server $($server.server)"
+                        New-Item -Path \\$remote\c$\DRSMonitoring -ItemType Directory -ErrorAction Stop |Out-Null
+                    }
+                catch {
+                        Write-Error "Failed to create DRSMonitoring folder on remote server $($server.server). Exiting script!"
+                        exit 1   
+                }
                 
-                &$log "Monitoring config file already exists on the target. Overriding"
-                $MonitoringFileInstalled = $true
-              }
-              Copy-Item -Path $localStorage\$($server.server)-DRSMonitoring.xml -Destination \\$remote\c$\DRSMonitoring -ErrorAction Stop -Force |out-null
-              &$log "Successfully copied the monitoring file to $($server.server)"
-        }
-        catch {
-              Write-Error "Failed to copy monitoring file to $($server.server). Exiting Script!"
-              exit 1
-       } 
+            }
 
-      [PSCustomObject]@{                                        
-                        ComputerName = $($server.server);
-                        MonitoringFileInstalled = $MonitoringFileInstalled
+            try { 
+                  if (test-path \\$remote\c$\DRSMonitoring\$($server.server)-DRSMonitoring.xml) {
+                
+                    &$log "Monitoring config file already exists on the target. Overriding"
+                    $MonitoringFileInstalled = $true
+                  }
+                  Copy-Item -Path $localStorage\$($server.server)-DRSMonitoring.xml -Destination \\$remote\c$\DRSMonitoring -ErrorAction Stop -Force |out-null
+                  &$log "Successfully copied the monitoring file to $($server.server)"
+            }
+            catch {
+                  Write-Error "Failed to copy monitoring file to $($server.server). Exiting Script!"
+                  exit 1
+           } 
+
+        $Hash[$($server.server)]=$MonitoringFileInstalled
+#      [PSCustomObject]@{                                        
+#                        ComputerName = $($server.server);
+                        #MonitoringFileInstalled = $MonitoringFileInstalled
                         
-     }   
+     #}        
     }    
+
+    $Hash
+
 } #End of Function Copy-ConfigFileToServer
 
 Function Set-RegistryKey {
@@ -324,13 +328,10 @@ if ($InputFile) {
     ConvertFrom-CSVToXMLMonitoringFile -Servers $servers
     
     &$log 'Calling function to copy local config XML files to remote servers'
-    $CopyResults = Copy-ConfigFileToServer -Servers $servers
-    $Fragments += $CopyResults |ConvertTo-Html -Property ComputerName,MonitoringFileInstalled -as Table -PreContent "<H2>Config File</H2>" -Fragment |out-string
+    $CopyResult = Copy-ConfigFileToServer -Servers $servers
 
-    &$log 'Setting Registry Key for monitoring on each server'
-    $RegResult = Set-RegistryKey -ComputerName ($servers.server)
-    $Fragments += $RegResult |ConvertTo-Html -Property ComputerName,KeyExisted,KeyCorrect,KeyCreated -as Table -PreContent "<H2>Registry</H2>" -Fragment |out-string
-
+    $myMonitoringObject = $RegResult |select-object ComputerName,KeyExisted,KeyCorrect,KeyCreated,@{l="MonitoringFileInstalled";e={$CopyResult[$($_.ComputerName)]}}
+    
     $head=@'
     <style>
         body { background-color:#dddddd;
@@ -353,6 +354,7 @@ if ($InputFile) {
 	}
 	
     &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
-    ConvertTo-Html -Head $head -PostContent $Fragments -Title "Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')" -Body "<H1>Monitoring Setup Report<h1>" |out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
+    $myMonitoringObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "<H1>Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')<h1>"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
+   
 }
 #endregion
