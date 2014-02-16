@@ -311,8 +311,11 @@ if ($InputFile) {
 	
     &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
     $PhillyPoshObject |ConvertTo-Html -Head $head -as Table -Title "Monitoring Setup Report" -Body "Monitoring Setup Report as of $(get-date -Format 'yyyyMMdd.HHmm')"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
+    
+    &$log "Saving Monitoring Setup Report to $PSScriptRoot\PhillyPoshMonitoringConfig.csv"
+    $PhillyPoshObject | export-csv -NoTypeInformation $PSScriptRoot\PhillyPoshMonitoringConfig.csv
+    
     Invoke-Item $PSScriptRoot\$saveHTMLfile
-    $PhillyPoshObject | export-csv -NoTypeInformation $pwd\PhillyPoshMonitoringConfig.csv
 
 }
 #endregion
@@ -321,6 +324,10 @@ If ($CompareConfiguration) {
    
    $saveHTMLfile = "ConfigCompareReport_$(get-date -Format "yyyyMMdd.HHmm").html"  
    &$log "Saving Monitoring Setup Report to $PSScriptRoot\$saveHTMLfile"
-   Compare-ConfigFile | ConvertTo-Html -Head $head -as Table -Title "Compare Configuration Report" -Body "Configuration Comparison Report as of $(get-date -Format 'yyyyMMdd.HHmm')"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
-   Invoke-Item $PSScriptRoot\$saveHTMLfile
+   $cf = Compare-ConfigFile
+   $cf | ConvertTo-Html -Head $head -as Table -Title "Compare Configuration Report" -Body "Configuration Comparison Report as of $(get-date -Format 'yyyyMMdd.HHmm')"|out-file $PSScriptRoot\$saveHTMLfile -Encoding utf8
+
+   &$log "Saving Monitoring Setup Report to $PSScriptRoot\PhillyPoshCompareConfig.csv"
+   $cf | export-csv -NoTypeInformation $PSScriptRoot\PhillyPoshCompareConfig.csv
+   Invoke-Item "$PSScriptRoot\$saveHTMLfile"
 }
